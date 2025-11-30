@@ -6,6 +6,11 @@
 #include <optional>
 
 class Member {
+    std::string mId;
+    Dimensions mBoatDimensions;
+    std::optional<std::string> mCurrentSlip;
+    bool mIsPermanent;
+
 public:
     Member(const std::string &memberId, int boatFeetLength, int boatInchesLength, 
            int boatFeetWidth, int boatInchesWidth, 
@@ -19,12 +24,6 @@ public:
     bool operator<(const Member &other) const;
     bool operator>(const Member &other) const;
     bool operator==(const Member &other) const;
-
-private:
-    std::string mId;
-    Dimensions mBoatDimensions;
-    std::optional<std::string> mCurrentSlip;
-    bool mIsPermanent;
 };
 
 #endif

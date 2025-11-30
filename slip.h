@@ -5,6 +5,9 @@
 #include <string>
 
 class Slip {
+    std::string mId;
+    Dimensions mMaxDimensions;
+
 public:
     Slip(const std::string &slipId, int feetLength, int inchesLength, int feetWidth, int inchesWidth);
     
@@ -12,10 +15,6 @@ public:
     const Dimensions& maxDimensions() const { return mMaxDimensions; }
     
     bool fits(const Dimensions &boatDimensions) const;
-
-private:
-    std::string mId;
-    Dimensions mMaxDimensions;
 };
 
 #endif

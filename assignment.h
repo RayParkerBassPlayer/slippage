@@ -12,7 +12,15 @@ public:
         NEW,
         UNASSIGNED
     };
-    
+
+private:
+    std::string mMemberId;
+    std::string mSlipId;
+    Status mStatus;
+    Dimensions mBoatDimensions;
+    std::string mComment;
+
+public:
     Assignment(const std::string &memberId, const std::string &slipId, 
                Status status, const Dimensions &dimensions, const std::string &comment = "");
     
@@ -25,13 +33,6 @@ public:
     bool assigned() const;
     
     static std::string statusToString(Status status);
-
-private:
-    std::string mMemberId;
-    std::string mSlipId;
-    Status mStatus;
-    Dimensions mBoatDimensions;
-    std::string mComment;
 };
 
 #endif

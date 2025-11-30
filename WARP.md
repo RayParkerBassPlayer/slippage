@@ -170,6 +170,35 @@ Follow these C++ coding standards (enforced by user rules):
 
 - **Member variables**: Prefixed with `m` (e.g., `mMembers`, `mSlips`, `mSlipOccupant`)
 
+- **Class organization**: Private members and methods come first, then public interface
+  - For classes, private is the default and doesn't need explicit `private:` keyword
+  - If public types (enums, typedefs) are needed by private members, declare them first in a public section
+  - Order: `class Name {` → private members/methods → `public:` → public interface → `};`
+  ```cpp
+  // Correct
+  class Example {
+      int mValue;  // private by default
+      void helper();
+  
+  public:
+      Example();
+      void doSomething();
+  };
+  
+  // With public enum needed by private member
+  class Assignment {
+  public:
+      enum class Status { PERMANENT, SAME, NEW };
+  
+  private:
+      Status mStatus;  // uses public enum
+  
+  public:
+      Assignment();
+      Status status() const;
+  };
+  ```
+
 ## Testing
 
 Tests use Catch2 v2 framework in `tests/test_assignment.cpp`. The test file contains comprehensive scenarios covering:

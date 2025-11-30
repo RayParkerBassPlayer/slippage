@@ -2,6 +2,9 @@
 #define DIMENSIONS_H
 
 class Dimensions {
+    int mLengthInches;
+    int mWidthInches;
+
 public:
     Dimensions(int feetLength, int inchesLength, int feetWidth, int inchesWidth);
     
@@ -9,10 +12,6 @@ public:
     int widthInches() const { return mWidthInches; }
     
     bool fitsIn(const Dimensions &container) const;
-
-private:
-    int mLengthInches;
-    int mWidthInches;
 };
 
 #endif

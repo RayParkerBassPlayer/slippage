@@ -8,12 +8,6 @@
 #include <map>
 
 class AssignmentEngine {
-public:
-    AssignmentEngine(std::vector<Member> members, std::vector<Slip> slips);
-    
-    std::vector<Assignment> assign();
-
-private:
     std::vector<Member> mMembers;
     std::vector<Slip> mSlips;
     std::map<std::string, const Member *> mSlipOccupant;
@@ -28,6 +22,11 @@ private:
     void assignMemberToSlip(const Member *member, const std::string &slipId);
     void unassignMember(const Member *member);
     bool isMemberAssigned(const Member *member) const;
+
+public:
+    AssignmentEngine(std::vector<Member> members, std::vector<Slip> slips);
+    
+    std::vector<Assignment> assign();
 };
 
 #endif
