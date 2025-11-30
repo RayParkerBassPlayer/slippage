@@ -77,7 +77,7 @@ sudo cmake --install build
 
 ```
 USAGE:
-  slippage --slips <slips.csv> --members <members.csv>
+  slippage --slips <slips.csv> --members <members.csv> [OPTIONS]
   slippage --version
   slippage --help
 
@@ -86,6 +86,8 @@ REQUIRED ARGUMENTS:
   --members <file>   CSV file containing member information
 
 OPTIONS:
+  --output <file>    Write assignments to file instead of stdout
+  --verbose          Print detailed assignment progress (phases and passes)
   --help, -h         Show help message and exit
   --version, -v      Show version information and exit
 ```
@@ -132,13 +134,14 @@ S3,30,0,15,0
 
 ## Output Format
 
-The program outputs assignments to stdout in CSV format:
+The program outputs assignments in CSV format:
 
 ```csv
 member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,comment
 M1,S5,SAME,20,0,10,0,
 M2,S3,SAME,18,6,9,0,
-M100,S10,PERMANENT,22,0,11,0,WARNING: Boat does not fit in assigned slip
+M100,S10,PERMANENT,22,0,11,0,"WARNING: Boat does not fit in assigned slip"
+M150,,UNASSIGNED,35,0,14,0,"Evicted - outranked by higher priority member(s), all 10 suitable slips taken"
 ```
 
 **Status values:**
@@ -149,8 +152,41 @@ M100,S10,PERMANENT,22,0,11,0,WARNING: Boat does not fit in assigned slip
 
 **Comment field:**
 - Usually empty for normal assignments
-- Shows `WARNING: Boat does not fit in assigned slip` when a permanent member's boat exceeds their slip dimensions
-- This warning indicates a data issue that should be reviewed
+- For permanent members: `WARNING: Boat does not fit in assigned slip` indicates data issue
+- For unassigned members, provides diagnostic reason:
+  - `Boat too large for all available slips`
+  - `Evicted - boat doesn't fit previous slip, all X suitable slips taken`
+  - `Evicted - outranked by higher priority member(s), all X suitable slips taken`
+  - `All X suitable slips taken by higher priority members`
+- Comments containing commas are properly quoted per CSV RFC 4180
+
+**Output modes:**
+- **Without `--output`**: CSV is written to stdout wrapped with markers:
+  ```
+  >>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START
+  [CSV content]
+  >>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END
+  ```
+  This makes programmatic extraction easy
+  
+- **With `--output <file>`**: CSV is written directly to the specified file without markers
+
+**Verbose mode (`--verbose`):**
+- Shows Phase 1 (permanent assignments) and Phase 2 (iterative assignments)
+- Displays pass numbers and individual assignment decisions
+- Example output:
+  ```
+  ===== PHASE 1: Permanent Member Assignments =====
+    Member M002 -> Slip B2 (PERMANENT)
+  
+  ===== PHASE 2: Iterative Assignment =====
+  
+  --- Pass 1 ---
+    Member M001 -> Slip A1 (keeping current)
+    Member M003 -> Slip B3 (new assignment)
+  
+  Assignment complete after 1 pass(es)
+  ```
 
 **Note:** All members appear in the output. Members who don't receive an assignment have an empty `assigned_slip` field and status `UNASSIGNED`.
 

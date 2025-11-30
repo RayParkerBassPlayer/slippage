@@ -112,7 +112,9 @@ The engine maintains two critical maps:
 **CsvParser** (`csv_parser.h/cpp`): Handles CSV I/O using csv-parser library
 - `parseMembers()`: Reads members.csv
 - `parseSlips()`: Reads slips.csv  
-- `writeAssignments()`: Outputs assignments to stdout
+- `writeAssignments()`: Outputs assignments to a stream (private method)
+- `operator<<`: Stream operator for writing assignments to any output stream
+- Properly quotes CSV fields containing commas per RFC 4180
 
 **Main** (`main.cpp`): CLI entry point with argument parsing and help text
 
@@ -234,12 +236,47 @@ TEST_CASE("Description of what you're testing", "[category]") {
 }
 ```
 
+## CLI Features
+
+**Verbose Mode (`--verbose`)**:
+- Prints detailed assignment progress to stdout
+- Shows Phase 1 (permanent assignments) and Phase 2 (iterative assignments)
+- Displays pass numbers (Pass 1, Pass 2, etc.) and individual decisions
+- Useful for understanding assignment behavior and debugging
+
+**File Output (`--output <file>`)**:
+- Writes CSV to specified file instead of stdout
+- No marker wrapping when outputting to file
+- Can be combined with `--verbose` (progress to stdout, CSV to file)
+
+**Stdout Markers**:
+- When outputting to stdout (no `--output`), CSV is wrapped:
+  - `>>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START`
+  - `>>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END`
+- Makes programmatic extraction easy from combined output
+
+**Unassigned Diagnostics**:
+- Comment field explains why each member wasn't assigned
+- Different messages for different scenarios (too large, evicted, outranked)
+- Shows count of suitable slips that were unavailable
+- All comments with commas are properly quoted per CSV RFC 4180
+
+## Test Data Generation
+
+**`generate_test_data.py`**: Python script to create realistic test scenarios
+- Generates 200 slips and 225 members by default
+- Realistic size distributions (more medium slips, fewer very large)
+- Creates capacity constraints and priority conflicts
+- Reproducible with random seed for consistent testing
+- Run: `python3 generate_test_data.py`
+
 ## Important Files
 
 - `ASSIGNMENT_RULES.md`: Comprehensive documentation of assignment algorithm and rules. Reference this when modifying assignment logic.
 - `README.md`: User-facing documentation with file formats, usage examples, and quick start guide
 - `version.h.in`: Version template configured by CMake; generates `build/version.h`
 - `CMakeLists.txt`: Build configuration; defines two targets: `slippage` (main) and `slippage_tests`
+- `generate_test_data.py`: Script to generate complex test scenarios with realistic data
 
 ## VSCode Integration
 
