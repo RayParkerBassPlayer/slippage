@@ -1,0 +1,212 @@
+# WARP.md
+
+This file provides guidance to WARP (warp.dev) when working with code in this repository.
+
+## Project Overview
+
+Slippage is a C++ command-line application for assigning boat slips to marina club members based on boat dimensions, member priority, and slip availability. It implements a priority-based assignment algorithm with eviction and reassignment logic.
+
+## Build Commands
+
+```bash
+# Configure and build (release)
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j4
+
+# Build debug version
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+
+# Build only tests
+cmake --build build --target slippage_tests
+
+# Clean build
+cmake --build build --target clean
+
+# Full rebuild
+rm -rf build && cmake -B build -S . && cmake --build build
+```
+
+## Running Tests
+
+```bash
+# Run tests directly
+./build/slippage_tests
+
+# Run tests with CTest
+ctest --test-dir build --output-on-failure
+
+# Run specific test by name
+./build/slippage_tests "Your test description"
+```
+
+## Running the Application
+
+```bash
+# Show help
+./build/slippage --help
+
+# Show version
+./build/slippage --version
+
+# Run assignment
+./build/slippage --slips test_slips.csv --members test_members.csv
+
+# Save output
+./build/slippage --slips test_slips.csv --members test_members.csv > output.csv
+```
+
+## Packaging
+
+```bash
+# Build Debian package
+./build-deb.sh
+
+# Package created in parent directory as: ../slippage_1.0.0_amd64.deb
+```
+
+## Architecture
+
+### Core Components
+
+**AssignmentEngine** (`assignment_engine.h/cpp`): The heart of the system. Implements a two-phase assignment algorithm:
+- Phase 1: Lock permanent members into their designated slips (cannot be evicted)
+- Phase 2: Iterative priority-based assignment with eviction support. Runs until stable state (no more evictions)
+
+The engine maintains two critical maps:
+- `mSlipOccupant`: Maps slip IDs to currently assigned members
+- `mMemberAssignment`: Maps members to their assigned slip IDs
+
+**Assignment Algorithm Flow**:
+1. Sort members by priority (lower ID = higher priority)
+2. For each unassigned member, try current slip first (minimize disruption)
+3. If current slip unavailable, find best-fit alternative (smallest slip that fits)
+4. Higher-priority members can evict lower-priority non-permanent members
+5. Evicted members are reconsidered in next iteration
+6. Loop until no changes occur (stable assignment reached)
+
+**Data Models** (`dimensions.h/cpp`, `slip.h/cpp`, `member.h/cpp`, `assignment.h/cpp`):
+- `Dimensions`: Stores boat/slip dimensions in total inches for precise comparison
+- `Slip`: Slip ID and maximum dimensions; provides `fits()` method
+- `Member`: Member ID, boat dimensions, current slip, permanent flag; implements comparison operators for priority
+- `Assignment`: Result structure with status (PERMANENT, SAME, NEW, UNASSIGNED)
+
+**CsvParser** (`csv_parser.h/cpp`): Handles CSV I/O using csv-parser library
+- `parseMembers()`: Reads members.csv
+- `parseSlips()`: Reads slips.csv  
+- `writeAssignments()`: Outputs assignments to stdout
+
+**Main** (`main.cpp`): CLI entry point with argument parsing and help text
+
+### Dependencies
+
+- **csv-parser** (Vincent La): Header-only CSV parsing library in `external/csv-parser/`
+- **Catch2 v2**: Testing framework in `external/catch2/`
+- Both are vendored and included in the repository
+
+### Key Algorithm Concepts
+
+**Priority-Based Assignment**: Members with lower IDs get preference. Member "M1" > "M2" > "M100" in priority.
+
+**Permanent Member Protection**: Permanent members cannot be evicted, even by higher-priority members. They are locked in during Phase 1.
+
+**Size-Based Protection**: A member keeps their slip if a higher-priority member's boat won't fit in it. Prevents futile evictions.
+
+**Best-Fit Selection**: When finding alternatives, system chooses smallest fitting slip by area (length × width) to minimize waste.
+
+**Iterative Eviction**: Evicted members are automatically reconsidered. Algorithm loops until stable (no more changes).
+
+## Code Style Conventions
+
+Follow these C++ coding standards (enforced by user rules):
+
+- **Pointer/reference symbols**: Adjacent to variable name, not type
+  - Correct: `void save(const std::string &name, Member *member)`
+  - Wrong: `void save(const std::string& name, Member* member)`
+
+- **No nested braces**: Place opening braces on separate lines for if/else, try/catch
+  ```cpp
+  // Correct
+  if (condition)
+  {
+  }
+  else
+  {
+  }
+  
+  // Wrong
+  if (condition) {
+  } else {
+  }
+  ```
+
+- **Spacing between declaration and condition check**: Add empty line between variable declarations/assignments and following if statements
+  ```cpp
+  // Correct
+  Slip *slip = findSlipById(id);
+  
+  if (slip)
+  {
+      // ...
+  }
+  ```
+
+- **Pronouns in comments**: Use "you" or no pronouns, never "we"
+  - Correct: "Check if boat fits in slip"
+  - Correct: "You can evict lower-priority members"
+  - Wrong: "We check if boat fits"
+
+- **Member variables**: Prefixed with `m` (e.g., `mMembers`, `mSlips`, `mSlipOccupant`)
+
+## Testing
+
+Tests use Catch2 v2 framework in `tests/test_assignment.cpp`. The test file contains comprehensive scenarios covering:
+- Basic assignments
+- Priority-based eviction
+- Permanent member protection
+- Size-based protection
+- Iterative reassignment
+- Best-fit selection
+- Edge cases (no slips, no fits, multiple evictions)
+
+When adding tests, follow the existing pattern:
+```cpp
+TEST_CASE("Description of what you're testing", "[category]") {
+    std::vector<Slip> slips;
+    slips.emplace_back("S1", 20, 0, 10, 0);
+    
+    std::vector<Member> members;
+    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, false);
+    
+    AssignmentEngine engine(std::move(members), std::move(slips));
+    auto assignments = engine.assign();
+    
+    REQUIRE(assignments.size() == 1);
+    REQUIRE(assignments[0].slipId() == "S1");
+    REQUIRE(assignments[0].status() == Assignment::Status::NEW);
+}
+```
+
+## Important Files
+
+- `ASSIGNMENT_RULES.md`: Comprehensive documentation of assignment algorithm and rules. Reference this when modifying assignment logic.
+- `README.md`: User-facing documentation with file formats, usage examples, and quick start guide
+- `version.h.in`: Version template configured by CMake; generates `build/version.h`
+- `CMakeLists.txt`: Build configuration; defines two targets: `slippage` (main) and `slippage_tests`
+
+## VSCode Integration
+
+The repository includes VSCode configurations in `.vscode/`:
+- **Build tasks** (Ctrl+Shift+B): CMake build, clean, rebuild, test targets
+- **Launch configs** (F5): Debug main application or tests
+- **C++ IntelliSense**: Configured for CMake build system
+
+## Common Development Patterns
+
+**Dimension Handling**: All dimensions are stored in total inches internally. Use the `Dimensions` class constructor which takes feet and inches separately but converts to total inches for comparison.
+
+**Optional Current Slips**: Members may have no current slip. Always check `member.currentSlip().has_value()` before accessing with `.value()`.
+
+**Iterative Assignment**: The assignment algorithm uses a `changesMade` flag. Any eviction sets this to true, triggering another iteration. This ensures all members are reconsidered after evictions.
+
+**Status Determination**: Assignment status is determined by comparing final assigned slip with member's current slip. If they match: SAME, if different: NEW, if none: UNASSIGNED.
