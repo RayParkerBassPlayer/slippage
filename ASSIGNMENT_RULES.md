@@ -38,7 +38,8 @@ Each assignment results in one of these statuses:
 
 **Permanent members always keep their current slip and cannot be evicted.**
 
-- If a permanent member's boat fits in their current slip, they get it
+- Permanent members keep their current slip **regardless of whether their boat fits**
+- If the boat doesn't fit, a warning is added to the comment field
 - Even higher-priority members cannot take a slip from a permanent member
 - Permanent members are processed first, before all other assignments
 
