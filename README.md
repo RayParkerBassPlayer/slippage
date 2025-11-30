@@ -13,6 +13,18 @@ A C++ command-line application that assigns boat slips to marina club members ba
 
 ## Quick Start
 
+### Cloning the Repository
+
+This project uses git submodules for external dependencies. Clone with:
+
+```bash
+# Clone with submodules
+git clone --recursive <repository-url>
+
+# Or if already cloned without --recursive:
+git submodule update --init --recursive
+```
+
 ### Option 1: Install from .deb Package
 
 ```bash
@@ -204,8 +216,9 @@ The project includes VSCode tasks and launch configurations:
 
 - C++17 compatible compiler (g++, clang++)
 - CMake 3.10 or higher
-- [csv-parser](https://github.com/vincentlaucsb/csv-parser) (included in `external/`)
-- [Catch2](https://github.com/catchorg/Catch2) v2.x (included in `external/`)
+- Git (for submodule management)
+- [csv-parser](https://github.com/vincentlaucsb/csv-parser) (included as submodule in `external/csv-parser/`)
+- [Catch2](https://github.com/catchorg/Catch2) v2.x (vendored in `external/catch2/`)
 
 ### Adding New Tests
 

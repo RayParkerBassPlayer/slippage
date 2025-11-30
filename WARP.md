@@ -6,6 +6,18 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 Slippage is a C++ command-line application for assigning boat slips to marina club members based on boat dimensions, member priority, and slip availability. It implements a priority-based assignment algorithm with eviction and reassignment logic.
 
+## Cloning and Setup
+
+This project uses git submodules for the csv-parser dependency:
+
+```bash
+# Clone with submodules
+git clone --recursive <repository-url>
+
+# Or if already cloned, initialize submodules
+git submodule update --init --recursive
+```
+
 ## Build Commands
 
 ```bash
@@ -100,9 +112,9 @@ The engine maintains two critical maps:
 
 ### Dependencies
 
-- **csv-parser** (Vincent La): Header-only CSV parsing library in `external/csv-parser/`
-- **Catch2 v2**: Testing framework in `external/catch2/`
-- Both are vendored and included in the repository
+- **csv-parser** (Vincent La): Header-only CSV parsing library in `external/csv-parser/` (git submodule)
+- **Catch2 v2**: Testing framework in `external/catch2/` (vendored)
+- csv-parser requires submodule initialization; Catch2 is directly included
 
 ### Key Algorithm Concepts
 
