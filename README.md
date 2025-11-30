@@ -60,11 +60,17 @@ sudo cmake --install build
 # Show version
 ./build/slippage --version
 
-# Run assignment
+# Run assignment (output to stdout with markers)
 ./build/slippage --slips slips.csv --members members.csv
 
 # Save output to file
-./build/slippage --slips slips.csv --members members.csv > assignments.csv
+./build/slippage --slips slips.csv --members members.csv --output assignments.csv
+
+# Verbose mode - shows assignment decisions in real-time
+./build/slippage --slips slips.csv --members members.csv --verbose
+
+# Combine verbose with file output
+./build/slippage --slips slips.csv --members members.csv --output assignments.csv --verbose
 ```
 
 ### Command-Line Options

@@ -1,9 +1,10 @@
 #include "assignment_engine.h"
 #include <algorithm>
 #include <limits>
+#include <iostream>
 
 AssignmentEngine::AssignmentEngine(std::vector<Member> members, std::vector<Slip> slips)
-    : mMembers(std::move(members)), mSlips(std::move(slips)) {
+    : mMembers(std::move(members)), mSlips(std::move(slips)), mVerbose(false) {
 }
 
 // Main assignment algorithm entry point.
@@ -31,6 +32,11 @@ std::vector<Assignment> AssignmentEngine::assign() {
 // - The slip is marked as occupied and unavailable for other members
 // - If a permanent member has no current slip, they are skipped
 void AssignmentEngine::assignPermanentMembers(std::vector<Assignment> &assignments) {
+    if (mVerbose)
+    {
+        std::cout << "\n===== PHASE 1: Permanent Member Assignments =====\n";
+    }
+    
     for (auto &member : mMembers) {
         // Skip non-permanent members - they're handled in phase 2
         if (!member.isPermanent()) {
@@ -60,6 +66,18 @@ void AssignmentEngine::assignPermanentMembers(std::vector<Assignment> &assignmen
             assignments.emplace_back(member.id(), slipId, 
                                     Assignment::Status::PERMANENT, 
                                     member.boatDimensions(), comment);
+            
+            if (mVerbose)
+            {
+                std::cout << "  Member " << member.id() << " -> Slip " << slipId << " (PERMANENT)";
+                
+                if (!comment.empty())
+                {
+                    std::cout << " [" << comment << "]";
+                }
+                
+                std::cout << "\n";
+            }
         }
     }
 }
@@ -98,9 +116,20 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
     // Keep processing until no changes occur (no evictions)
     // This ensures evicted members get reconsidered for alternative slips
     bool changesMade = true;
+    int passNumber = 1;
+    
+    if (mVerbose)
+    {
+        std::cout << "\n===== PHASE 2: Iterative Assignment =====\n";
+    }
 
     while (changesMade) {
         changesMade = false;
+        
+        if (mVerbose)
+        {
+            std::cout << "\n--- Pass " << passNumber << " ---\n";
+        }
 
         // Process each member in priority order
         for (Member *member : assignableMembers) {
@@ -169,12 +198,35 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
             // STEP 3: Assign member to slip if one was found
             if (!assignedSlipId.empty()) {
                 assignMemberToSlip(member, assignedSlipId);
+                
+                if (mVerbose)
+                {
+                    std::cout << "  Member " << member->id() << " -> Slip " << assignedSlipId;
+                    
+                    if (member->currentSlip().has_value() && member->currentSlip().value() == assignedSlipId)
+                    {
+                        std::cout << " (keeping current)";
+                    }
+                    else
+                    {
+                        std::cout << " (new assignment)";
+                    }
+                    
+                    std::cout << "\n";
+                }
             }
             // If no slip found, member remains unassigned and will be
             // added to output with UNASSIGNED status later
         }
+        
+        passNumber++;
     }
     // End of iterative loop - stable assignment state reached
+    
+    if (mVerbose)
+    {
+        std::cout << "\nAssignment complete after " << (passNumber - 1) << " pass(es)\n";
+    }
 
     // STEP 4: Generate output for all assigned members
     // Determine if they kept their slip (SAME) or got a new one (NEW)
@@ -203,17 +255,18 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
     // - Evicted and no alternative slip found
     for (const auto &member : assignableMembers) {
         if (!isMemberAssigned(member)) {
-            assignments.emplace_back(member->id(), "", Assignment::Status::UNASSIGNED, member->boatDimensions());
+            std::string comment = generateUnassignedComment(member);
+            assignments.emplace_back(member->id(), "", Assignment::Status::UNASSIGNED, member->boatDimensions(), comment);
         }
     }
 }
 
 // Find a slip by its ID.
 // Returns pointer to slip if found, nullptr otherwise.
-Slip *AssignmentEngine::findSlipById(const std::string &slipId) {
-    for (auto &slip : mSlips) {
+Slip *AssignmentEngine::findSlipById(const std::string &slipId) const {
+    for (const auto &slip : mSlips) {
         if (slip.id() == slipId) {
-            return &slip;
+            return const_cast<Slip *>(&slip);
         }
     }
     return nullptr;
@@ -254,6 +307,76 @@ void AssignmentEngine::unassignMember(const Member *member) {
 // Returns true if member is currently assigned, false otherwise.
 bool AssignmentEngine::isMemberAssigned(const Member *member) const {
     return mMemberAssignment.find(member) != mMemberAssignment.end();
+}
+
+// Generate a diagnostic comment explaining why a member wasn't assigned.
+// Provides specific reasons to help understand assignment failures.
+std::string AssignmentEngine::generateUnassignedComment(const Member *member) const {
+    // Check if member had a current slip
+    bool hadCurrentSlip = member->currentSlip().has_value();
+    
+    // Check if any slip can fit the boat
+    bool anySlipFits = false;
+    int fittingSlipCount = 0;
+    
+    for (const auto &slip : mSlips)
+    {
+        if (slip.fits(member->boatDimensions()))
+        {
+            anySlipFits = true;
+            fittingSlipCount++;
+        }
+    }
+    
+    if (!anySlipFits)
+    {
+        if (hadCurrentSlip)
+        {
+            return "Evicted - boat too large for all available slips";
+        }
+        
+        return "Boat too large for all available slips";
+    }
+    
+    // Boat fits in some slips, check current slip status
+    if (hadCurrentSlip)
+    {
+        const std::string &currentSlipId = member->currentSlip().value();
+        Slip *currentSlip = findSlipById(currentSlipId);
+        
+        if (!currentSlip)
+        {
+            return "Evicted - previous slip no longer exists";
+        }
+        
+        if (!currentSlip->fits(member->boatDimensions()))
+        {
+            if (fittingSlipCount > 0)
+            {
+                return "Evicted - boat doesn't fit previous slip, all " + std::to_string(fittingSlipCount) + " suitable slips taken";
+            }
+            
+            return "Evicted - boat doesn't fit previous slip";
+        }
+        
+        // Check who occupies the current slip
+        auto occupantIt = mSlipOccupant.find(currentSlipId);
+        
+        if (occupantIt != mSlipOccupant.end())
+        {
+            const Member *occupant = occupantIt->second;
+            
+            if (occupant->isPermanent())
+            {
+                return "Evicted - previous slip taken by permanent member, all " + std::to_string(fittingSlipCount) + " suitable slips taken";
+            }
+            
+            return "Evicted - outranked by higher priority member(s), all " + std::to_string(fittingSlipCount) + " suitable slips taken";
+        }
+    }
+    
+    // Never had a slip, or lost it and no alternatives
+    return "All " + std::to_string(fittingSlipCount) + " suitable slips taken by higher priority members";
 }
 
 // Find the best available slip for a boat.

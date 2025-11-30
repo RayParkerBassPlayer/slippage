@@ -1,0 +1,226 @@
+member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,comment
+M001,S013,PERMANENT,21,0,7,6,WARNING: Boat does not fit in assigned slip
+M002,S025,PERMANENT,18,6,7,0,
+M003,S024,PERMANENT,23,0,9,0,WARNING: Boat does not fit in assigned slip
+M004,S135,PERMANENT,17,6,6,0,
+M005,S124,PERMANENT,28,6,10,0,WARNING: Boat does not fit in assigned slip
+M006,S055,PERMANENT,30,0,11,0,WARNING: Boat does not fit in assigned slip
+M007,S168,PERMANENT,29,0,11,0,WARNING: Boat does not fit in assigned slip
+M008,S141,PERMANENT,19,0,6,0,
+M009,S035,PERMANENT,22,0,8,0,WARNING: Boat does not fit in assigned slip
+M010,S050,PERMANENT,21,0,8,0,
+M011,S129,PERMANENT,29,0,11,0,WARNING: Boat does not fit in assigned slip
+M012,S054,PERMANENT,24,0,9,0,WARNING: Boat does not fit in assigned slip
+M013,S105,PERMANENT,19,6,7,0,
+M014,S143,PERMANENT,24,0,9,6,
+M015,S183,PERMANENT,20,0,8,0,
+M016,S134,PERMANENT,17,0,6,0,
+M017,S145,PERMANENT,27,6,10,0,
+M018,S118,PERMANENT,20,0,7,6,
+M019,S032,PERMANENT,21,0,8,0,WARNING: Boat does not fit in assigned slip
+M020,S072,PERMANENT,22,6,8,0,WARNING: Boat does not fit in assigned slip
+M021,S139,PERMANENT,24,0,9,0,
+M022,S076,PERMANENT,35,6,12,6,WARNING: Boat does not fit in assigned slip
+M023,S181,SAME,17,6,6,0,
+M024,S172,SAME,19,6,7,6,
+M025,S017,SAME,19,0,7,0,
+M026,S158,SAME,23,0,9,6,
+M027,S184,NEW,29,0,11,0,
+M028,S053,NEW,22,0,8,6,
+M029,S136,SAME,25,0,9,0,
+M030,S163,SAME,22,0,8,0,
+M032,S131,SAME,24,6,9,6,
+M033,S176,SAME,29,6,11,0,
+M035,S182,SAME,28,0,10,6,
+M036,S191,NEW,34,0,13,6,
+M037,S130,SAME,18,0,6,6,
+M038,S192,SAME,29,6,10,0,
+M039,S187,SAME,22,0,7,6,
+M041,S106,NEW,24,0,9,6,
+M044,S086,SAME,22,0,8,6,
+M046,S087,NEW,25,6,9,0,
+M047,S193,SAME,19,0,7,0,
+M049,S110,SAME,21,6,8,0,
+M050,S101,SAME,24,6,9,6,
+M051,S200,SAME,18,0,6,0,
+M052,S030,SAME,18,0,6,0,
+M054,S195,SAME,19,0,7,0,
+M056,S148,SAME,24,0,8,0,
+M058,S098,SAME,24,0,9,6,
+M061,S186,SAME,18,0,6,0,
+M063,S159,SAME,28,0,9,0,
+M065,S052,SAME,18,6,7,0,
+M066,S003,NEW,17,6,6,0,
+M069,S096,SAME,20,0,7,0,
+M071,S040,NEW,20,0,8,0,
+M074,S138,SAME,27,0,10,0,
+M076,S178,SAME,16,0,6,0,
+M078,S066,SAME,19,0,7,0,
+M081,S151,SAME,18,6,6,0,
+M086,S185,NEW,30,6,11,6,
+M087,S133,SAME,20,6,8,0,
+M088,S174,SAME,24,6,9,0,
+M089,S160,SAME,16,6,6,0,
+M090,S165,SAME,27,0,10,0,
+M093,S180,SAME,20,0,7,0,
+M095,S161,SAME,26,0,10,0,
+M096,S084,SAME,21,0,8,0,
+M102,S146,SAME,25,6,9,0,
+M103,S092,SAME,18,6,7,0,
+M104,S166,SAME,22,0,8,0,
+M105,S169,SAME,20,0,7,0,
+M107,S088,SAME,20,0,7,0,
+M109,S154,NEW,28,0,11,6,
+M111,S150,SAME,22,0,7,0,
+M114,S099,SAME,21,0,8,0,
+M116,S060,SAME,21,0,8,0,
+M117,S042,SAME,19,0,7,0,
+M120,S157,SAME,24,0,9,0,
+M121,S137,SAME,24,6,9,0,
+M122,S019,SAME,17,0,6,6,
+M123,S194,SAME,23,0,9,0,
+M126,S079,SAME,20,0,7,0,
+M128,S162,SAME,26,0,10,0,
+M129,S006,SAME,18,0,6,0,
+M131,S011,NEW,18,6,7,0,
+M132,S173,SAME,26,0,10,0,
+M133,S058,SAME,21,0,8,6,
+M134,S111,SAME,19,0,7,0,
+M139,S171,SAME,22,0,8,6,
+M144,S115,SAME,17,0,6,0,
+M145,S155,SAME,22,0,8,6,
+M146,S199,NEW,39,0,15,0,
+M148,S047,NEW,22,6,8,6,
+M151,S197,SAME,20,6,8,6,
+M152,S198,SAME,18,0,6,0,
+M153,S123,SAME,20,0,8,6,
+M154,S189,SAME,18,0,7,0,
+M155,S104,SAME,22,6,7,0,
+M156,S140,SAME,18,0,7,0,
+M157,S067,SAME,18,0,7,0,
+M158,S070,SAME,21,6,8,6,
+M160,S126,SAME,20,0,8,0,
+M164,S152,SAME,22,6,8,0,
+M167,S142,SAME,24,0,8,0,
+M179,S005,NEW,18,0,7,6,
+M031,,UNASSIGNED,21,0,8,6,"Evicted - boat doesn't fit previous slip, all 155 suitable slips taken"
+M034,,UNASSIGNED,30,0,10,6,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M040,,UNASSIGNED,30,0,10,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M042,,UNASSIGNED,33,0,13,0,"Evicted - boat doesn't fit previous slip, all 10 suitable slips taken"
+M043,,UNASSIGNED,28,0,11,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M045,,UNASSIGNED,24,0,9,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M048,,UNASSIGNED,30,0,11,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M053,,UNASSIGNED,30,0,11,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M055,,UNASSIGNED,28,6,11,0,"Evicted - boat doesn't fit previous slip, all 37 suitable slips taken"
+M057,,UNASSIGNED,27,0,10,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M059,,UNASSIGNED,34,0,13,6,"Evicted - boat doesn't fit previous slip, all 10 suitable slips taken"
+M060,,UNASSIGNED,34,6,13,0,"Evicted - boat doesn't fit previous slip, all 10 suitable slips taken"
+M062,,UNASSIGNED,24,0,9,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M064,,UNASSIGNED,25,6,9,0,"Evicted - boat doesn't fit previous slip, all 79 suitable slips taken"
+M067,,UNASSIGNED,28,6,10,0,"Evicted - boat doesn't fit previous slip, all 37 suitable slips taken"
+M068,,UNASSIGNED,28,0,10,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M070,,UNASSIGNED,34,0,13,6,"Evicted - boat doesn't fit previous slip, all 10 suitable slips taken"
+M072,,UNASSIGNED,23,0,8,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M073,,UNASSIGNED,34,0,12,0,"Evicted - boat doesn't fit previous slip, all 10 suitable slips taken"
+M075,,UNASSIGNED,21,0,8,0,"Evicted - outranked by higher priority member(s), all 155 suitable slips taken"
+M077,,UNASSIGNED,27,0,10,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M079,,UNASSIGNED,24,6,8,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M080,,UNASSIGNED,28,6,11,0,"Evicted - boat doesn't fit previous slip, all 37 suitable slips taken"
+M082,,UNASSIGNED,25,0,8,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M083,,UNASSIGNED,23,0,9,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M084,,UNASSIGNED,21,6,8,0,"Evicted - boat doesn't fit previous slip, all 155 suitable slips taken"
+M085,,UNASSIGNED,26,6,10,6,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M091,,UNASSIGNED,28,6,10,0,"Evicted - boat doesn't fit previous slip, all 37 suitable slips taken"
+M092,,UNASSIGNED,34,0,13,0,"Evicted - boat doesn't fit previous slip, all 10 suitable slips taken"
+M094,,UNASSIGNED,29,0,10,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M097,,UNASSIGNED,19,0,7,0,"Evicted - boat doesn't fit previous slip, all 185 suitable slips taken"
+M098,,UNASSIGNED,26,0,9,6,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M099,,UNASSIGNED,21,0,8,0,"Evicted - boat doesn't fit previous slip, all 155 suitable slips taken"
+M100,,UNASSIGNED,26,0,9,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M101,,UNASSIGNED,26,0,9,6,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M106,,UNASSIGNED,29,0,11,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M108,,UNASSIGNED,21,0,8,6,"Evicted - boat doesn't fit previous slip, all 155 suitable slips taken"
+M110,,UNASSIGNED,29,6,11,6,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M112,,UNASSIGNED,28,0,10,6,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M113,,UNASSIGNED,29,6,11,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M115,,UNASSIGNED,26,0,9,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M118,,UNASSIGNED,30,6,11,0,"Evicted - boat doesn't fit previous slip, all 14 suitable slips taken"
+M119,,UNASSIGNED,29,6,11,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M124,,UNASSIGNED,24,6,8,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M125,,UNASSIGNED,27,0,9,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M127,,UNASSIGNED,21,6,8,0,"Evicted - boat doesn't fit previous slip, all 155 suitable slips taken"
+M130,,UNASSIGNED,21,0,8,6,"Evicted - boat doesn't fit previous slip, all 155 suitable slips taken"
+M135,,UNASSIGNED,26,0,9,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M136,,UNASSIGNED,24,0,9,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M137,,UNASSIGNED,26,0,10,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M138,,UNASSIGNED,34,0,13,0,"Evicted - boat doesn't fit previous slip, all 10 suitable slips taken"
+M140,,UNASSIGNED,24,6,9,0,"Evicted - outranked by higher priority member(s), all 115 suitable slips taken"
+M141,,UNASSIGNED,27,0,10,6,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M142,,UNASSIGNED,28,0,10,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M143,,UNASSIGNED,27,0,10,6,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M147,,UNASSIGNED,29,0,11,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M149,,UNASSIGNED,23,0,8,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M150,,UNASSIGNED,28,0,9,0,"Evicted - outranked by higher priority member(s), all 65 suitable slips taken"
+M159,,UNASSIGNED,24,6,8,0,"Evicted - outranked by higher priority member(s), all 115 suitable slips taken"
+M161,,UNASSIGNED,30,0,11,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M162,,UNASSIGNED,27,0,10,0,"Evicted - boat doesn't fit previous slip, all 65 suitable slips taken"
+M163,,UNASSIGNED,29,0,11,0,"Evicted - boat doesn't fit previous slip, all 30 suitable slips taken"
+M165,,UNASSIGNED,35,0,13,0,"Evicted - boat doesn't fit previous slip, all 10 suitable slips taken"
+M166,,UNASSIGNED,28,6,9,0,"Evicted - boat doesn't fit previous slip, all 37 suitable slips taken"
+M168,,UNASSIGNED,24,6,9,0,"Evicted - boat doesn't fit previous slip, all 115 suitable slips taken"
+M169,,UNASSIGNED,27,0,10,0,All 65 suitable slips taken by higher priority members
+M170,,UNASSIGNED,25,0,9,0,All 115 suitable slips taken by higher priority members
+M171,,UNASSIGNED,28,0,10,0,All 65 suitable slips taken by higher priority members
+M172,,UNASSIGNED,20,0,6,0,All 185 suitable slips taken by higher priority members
+M173,,UNASSIGNED,19,6,7,0,All 185 suitable slips taken by higher priority members
+M174,,UNASSIGNED,25,0,9,6,All 115 suitable slips taken by higher priority members
+M175,,UNASSIGNED,27,6,10,0,All 65 suitable slips taken by higher priority members
+M176,,UNASSIGNED,24,0,8,0,All 115 suitable slips taken by higher priority members
+M177,,UNASSIGNED,25,0,8,0,All 115 suitable slips taken by higher priority members
+M178,,UNASSIGNED,27,6,10,0,All 65 suitable slips taken by higher priority members
+M180,,UNASSIGNED,39,0,15,0,All 2 suitable slips taken by higher priority members
+M181,,UNASSIGNED,29,0,11,0,All 30 suitable slips taken by higher priority members
+M182,,UNASSIGNED,19,0,7,6,All 185 suitable slips taken by higher priority members
+M183,,UNASSIGNED,17,0,6,0,All 200 suitable slips taken by higher priority members
+M184,,UNASSIGNED,18,6,6,6,All 188 suitable slips taken by higher priority members
+M185,,UNASSIGNED,26,0,10,0,All 65 suitable slips taken by higher priority members
+M186,,UNASSIGNED,24,0,9,0,All 115 suitable slips taken by higher priority members
+M187,,UNASSIGNED,20,0,7,0,All 185 suitable slips taken by higher priority members
+M188,,UNASSIGNED,19,0,7,0,All 185 suitable slips taken by higher priority members
+M189,,UNASSIGNED,29,0,11,0,All 30 suitable slips taken by higher priority members
+M190,,UNASSIGNED,23,0,9,0,All 115 suitable slips taken by higher priority members
+M191,,UNASSIGNED,24,0,8,0,All 115 suitable slips taken by higher priority members
+M192,,UNASSIGNED,17,6,6,0,All 200 suitable slips taken by higher priority members
+M193,,UNASSIGNED,24,6,9,0,All 115 suitable slips taken by higher priority members
+M194,,UNASSIGNED,28,6,10,0,All 37 suitable slips taken by higher priority members
+M195,,UNASSIGNED,27,6,10,6,All 65 suitable slips taken by higher priority members
+M196,,UNASSIGNED,24,0,9,0,All 115 suitable slips taken by higher priority members
+M197,,UNASSIGNED,27,0,10,0,All 65 suitable slips taken by higher priority members
+M198,,UNASSIGNED,23,0,9,6,All 115 suitable slips taken by higher priority members
+M199,,UNASSIGNED,20,0,7,0,All 185 suitable slips taken by higher priority members
+M200,,UNASSIGNED,18,0,6,0,All 200 suitable slips taken by higher priority members
+M201,,UNASSIGNED,27,0,10,6,All 65 suitable slips taken by higher priority members
+M202,,UNASSIGNED,40,0,15,6,All 2 suitable slips taken by higher priority members
+M203,,UNASSIGNED,18,0,6,0,All 200 suitable slips taken by higher priority members
+M204,,UNASSIGNED,23,0,8,6,All 115 suitable slips taken by higher priority members
+M205,,UNASSIGNED,25,0,9,0,All 115 suitable slips taken by higher priority members
+M206,,UNASSIGNED,21,6,8,0,All 155 suitable slips taken by higher priority members
+M207,,UNASSIGNED,16,0,6,0,All 200 suitable slips taken by higher priority members
+M208,,UNASSIGNED,18,0,6,0,All 200 suitable slips taken by higher priority members
+M209,,UNASSIGNED,35,0,13,0,All 10 suitable slips taken by higher priority members
+M210,,UNASSIGNED,27,0,10,0,All 65 suitable slips taken by higher priority members
+M211,,UNASSIGNED,17,6,6,0,All 200 suitable slips taken by higher priority members
+M212,,UNASSIGNED,24,0,9,0,All 115 suitable slips taken by higher priority members
+M213,,UNASSIGNED,21,6,8,0,All 155 suitable slips taken by higher priority members
+M214,,UNASSIGNED,23,0,9,0,All 115 suitable slips taken by higher priority members
+M215,,UNASSIGNED,34,6,12,0,All 10 suitable slips taken by higher priority members
+M216,,UNASSIGNED,34,6,12,0,All 10 suitable slips taken by higher priority members
+M217,,UNASSIGNED,25,0,9,0,All 115 suitable slips taken by higher priority members
+M218,,UNASSIGNED,23,0,9,6,All 115 suitable slips taken by higher priority members
+M219,,UNASSIGNED,21,0,8,6,All 155 suitable slips taken by higher priority members
+M220,,UNASSIGNED,25,0,8,0,All 115 suitable slips taken by higher priority members
+M221,,UNASSIGNED,25,0,9,0,All 115 suitable slips taken by higher priority members
+M222,,UNASSIGNED,24,0,9,6,All 115 suitable slips taken by higher priority members
+M223,,UNASSIGNED,19,0,7,0,All 185 suitable slips taken by higher priority members
+M224,,UNASSIGNED,29,0,11,6,All 30 suitable slips taken by higher priority members
+M225,,UNASSIGNED,21,0,8,0,All 155 suitable slips taken by higher priority members

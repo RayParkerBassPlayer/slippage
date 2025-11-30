@@ -61,11 +61,17 @@ ctest --test-dir build --output-on-failure
 # Show version
 ./build/slippage --version
 
-# Run assignment
+# Run assignment (stdout with markers)
 ./build/slippage --slips test_slips.csv --members test_members.csv
 
-# Save output
-./build/slippage --slips test_slips.csv --members test_members.csv > output.csv
+# Save output to file
+./build/slippage --slips test_slips.csv --members test_members.csv --output output.csv
+
+# Verbose mode (shows Pass 1, Pass 2, etc. on stdout)
+./build/slippage --slips test_slips.csv --members test_members.csv --verbose
+
+# Verbose with file output (progress to stdout, CSV to file)
+./build/slippage --slips test_slips.csv --members test_members.csv --output output.csv --verbose
 ```
 
 ## Packaging

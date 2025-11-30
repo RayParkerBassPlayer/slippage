@@ -2,6 +2,7 @@
 #include "external/csv-parser/single_include/csv.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <sstream>
 
 std::vector<Member> CsvParser::parseMembers(const std::string &filename) {
     std::vector<Member> members;
@@ -47,8 +48,52 @@ std::vector<Slip> CsvParser::parseSlips(const std::string &filename) {
     return slips;
 }
 
-void CsvParser::writeAssignments(const std::vector<Assignment> &assignments) {
-    std::cout << "member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,comment\n";
+// Escape and quote a CSV field if it contains special characters
+static std::string quoteCsvField(const std::string &field) {
+    if (field.empty())
+    {
+        return field;
+    }
+    
+    // Check if field needs quoting (contains comma, quote, or newline)
+    bool needsQuoting = false;
+    
+    for (char c : field)
+    {
+        if (c == ',' || c == '"' || c == '\n' || c == '\r')
+        {
+            needsQuoting = true;
+            break;
+        }
+    }
+    
+    if (!needsQuoting)
+    {
+        return field;
+    }
+    
+    // Quote the field and escape internal quotes by doubling them
+    std::ostringstream result;
+    result << '"';
+    
+    for (char c : field)
+    {
+        if (c == '"')
+        {
+            result << "\"\"";
+        }
+        else
+        {
+            result << c;
+        }
+    }
+    
+    result << '"';
+    return result.str();
+}
+
+void CsvParser::writeAssignments(const std::vector<Assignment> &assignments, std::ostream &out) {
+    out << "member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,comment\n";
     
     for (const auto &assignment : assignments) {
         const auto &dims = assignment.boatDimensions();
@@ -58,13 +103,13 @@ void CsvParser::writeAssignments(const std::vector<Assignment> &assignments) {
         int widthFeet = dims.widthInches() / 12;
         int widthInches = dims.widthInches() % 12;
         
-        std::cout << assignment.memberId() << ","
-                  << assignment.slipId() << ","
-                  << Assignment::statusToString(assignment.status()) << ","
-                  << lengthFeet << ","
-                  << lengthInches << ","
-                  << widthFeet << ","
-                  << widthInches << ","
-                  << assignment.comment() << "\n";
+        out << assignment.memberId() << ","
+            << assignment.slipId() << ","
+            << Assignment::statusToString(assignment.status()) << ","
+            << lengthFeet << ","
+            << lengthInches << ","
+            << widthFeet << ","
+            << widthInches << ","
+            << quoteCsvField(assignment.comment()) << "\n";
     }
 }

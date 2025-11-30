@@ -2,6 +2,7 @@
 #include "assignment_engine.h"
 #include "version.h"
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <cstring>
 
@@ -14,7 +15,7 @@ void printVersion() {
 void printHelp(const char *programName) {
     printVersion();
     std::cout << "USAGE:\n";
-    std::cout << "  " << programName << " --slips <slips.csv> --members <members.csv>\n";
+    std::cout << "  " << programName << " --slips <slips.csv> --members <members.csv> [OPTIONS]\n";
     std::cout << "  " << programName << " --version\n";
     std::cout << "  " << programName << " --help\n";
     std::cout << "\n";
@@ -30,6 +31,8 @@ void printHelp(const char *programName) {
     std::cout << "  --members <file>   CSV file containing member information\n";
     std::cout << "\n";
     std::cout << "OPTIONS:\n";
+    std::cout << "  --output <file>    Write assignments to file instead of stdout\n";
+    std::cout << "  --verbose          Print detailed assignment progress (phases and passes)\n";
     std::cout << "  --help, -h         Show this help message and exit\n";
     std::cout << "  --version, -v      Show version information and exit\n";
     std::cout << "\n";
@@ -46,9 +49,14 @@ void printHelp(const char *programName) {
     std::cout << "    M002,22,0,10,0,S2,1\n";
     std::cout << "\n";
     std::cout << "OUTPUT:\n";
-    std::cout << "  Results are written to stdout in CSV format with columns:\n";
+    std::cout << "  Results are written to stdout (or file if --output specified) in CSV format:\n";
     std::cout << "    member_id,assigned_slip,status,boat_length_ft,boat_length_in,\n";
     std::cout << "    boat_width_ft,boat_width_in,comment\n";
+    std::cout << "\n";
+    std::cout << "  When writing to stdout, output is wrapped with markers:\n";
+    std::cout << "    >>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START\n";
+    std::cout << "    [CSV content]\n";
+    std::cout << "    >>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END\n";
     std::cout << "\n";
     std::cout << "  Status values:\n";
     std::cout << "    PERMANENT   - Member has permanent assignment\n";
@@ -57,11 +65,17 @@ void printHelp(const char *programName) {
     std::cout << "    UNASSIGNED  - Member did not receive assignment\n";
     std::cout << "\n";
     std::cout << "EXAMPLES:\n";
-    std::cout << "  # Basic usage\n";
+    std::cout << "  # Basic usage (output to stdout)\n";
     std::cout << "  " << programName << " --slips slips.csv --members members.csv\n";
     std::cout << "\n";
     std::cout << "  # Save output to file\n";
-    std::cout << "  " << programName << " --slips slips.csv --members members.csv > assignments.csv\n";
+    std::cout << "  " << programName << " --slips slips.csv --members members.csv --output assignments.csv\n";
+    std::cout << "\n";
+    std::cout << "  # Verbose mode with detailed progress\n";
+    std::cout << "  " << programName << " --slips slips.csv --members members.csv --verbose\n";
+    std::cout << "\n";
+    std::cout << "  # Verbose with file output (progress to stdout, CSV to file)\n";
+    std::cout << "  " << programName << " --slips slips.csv --members members.csv --output out.csv --verbose\n";
     std::cout << "\n";
     std::cout << "  # Show version\n";
     std::cout << "  " << programName << " --version\n";
@@ -88,6 +102,8 @@ int main(int argc, char *argv[]) {
 
     std::string slipsFile;
     std::string membersFile;
+    std::string outputFile;
+    bool verbose = false;
     
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--slips") == 0 && i + 1 < argc) {
@@ -95,6 +111,12 @@ int main(int argc, char *argv[]) {
         }
         else if (std::strcmp(argv[i], "--members") == 0 && i + 1 < argc) {
             membersFile = argv[++i];
+        }
+        else if (std::strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
+            outputFile = argv[++i];
+        }
+        else if (std::strcmp(argv[i], "--verbose") == 0) {
+            verbose = true;
         }
         else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
             printHelp(argv[0]);
@@ -104,7 +126,7 @@ int main(int argc, char *argv[]) {
             printVersion();
             return 0;
         }
-        else if (std::strcmp(argv[i], "--slips") == 0 || std::strcmp(argv[i], "--members") == 0) {
+        else if (std::strcmp(argv[i], "--slips") == 0 || std::strcmp(argv[i], "--members") == 0 || std::strcmp(argv[i], "--output") == 0) {
             std::cerr << "Error: " << argv[i] << " requires an argument\n\n";
             std::cerr << "Try '" << argv[0] << " --help' for more information.\n";
             return 1;
@@ -126,9 +148,33 @@ int main(int argc, char *argv[]) {
         auto members = CsvParser::parseMembers(membersFile);
         
         AssignmentEngine engine(std::move(members), std::move(slips));
+        engine.setVerbose(verbose);
         auto assignments = engine.assign();
         
-        CsvParser::writeAssignments(assignments);
+        if (outputFile.empty())
+        {
+            std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START\n";
+            std::cout << assignments;
+            std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END\n";
+        }
+        else
+        {
+            std::ofstream outFile(outputFile);
+            
+            if (!outFile)
+            {
+                std::cerr << "Error: Cannot open output file '" << outputFile << "'\n";
+                return 1;
+            }
+            
+            outFile << assignments;
+            outFile.close();
+            
+            if (verbose)
+            {
+                std::cout << "\nAssignments written to: " << outputFile << "\n";
+            }
+        }
         
         return 0;
     }

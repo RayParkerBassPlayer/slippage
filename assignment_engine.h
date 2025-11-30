@@ -12,20 +12,23 @@ class AssignmentEngine {
     std::vector<Slip> mSlips;
     std::map<std::string, const Member *> mSlipOccupant;
     std::map<const Member *, std::string> mMemberAssignment;
+    bool mVerbose;
     
     void assignPermanentMembers(std::vector<Assignment> &assignments);
     void assignRemainingMembers(std::vector<Assignment> &assignments);
     
-    Slip *findSlipById(const std::string &slipId);
+    Slip *findSlipById(const std::string &slipId) const;
     Slip *findBestAvailableSlip(const Dimensions &boatDimensions, const std::string &excludeSlipId = "");
     Member *findMemberById(const std::string &memberId);
     void assignMemberToSlip(const Member *member, const std::string &slipId);
     void unassignMember(const Member *member);
     bool isMemberAssigned(const Member *member) const;
+    std::string generateUnassignedComment(const Member *member) const;
 
 public:
     AssignmentEngine(std::vector<Member> members, std::vector<Slip> slips);
     
+    void setVerbose(bool verbose) { mVerbose = verbose; }
     std::vector<Assignment> assign();
 };
 
