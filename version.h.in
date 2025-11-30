@@ -1,0 +1,9 @@
+#ifndef VERSION_H
+#define VERSION_H
+
+#define SLIPPAGE_VERSION_MAJOR @Slippage_VERSION_MAJOR@
+#define SLIPPAGE_VERSION_MINOR @Slippage_VERSION_MINOR@
+#define SLIPPAGE_VERSION_PATCH @Slippage_VERSION_PATCH@
+#define SLIPPAGE_VERSION "@Slippage_VERSION@"
+
+#endif

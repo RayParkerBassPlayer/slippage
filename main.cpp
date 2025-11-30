@@ -1,0 +1,139 @@
+#include "csv_parser.h"
+#include "assignment_engine.h"
+#include "version.h"
+#include <iostream>
+#include <string>
+#include <cstring>
+
+void printVersion() {
+    std::cout << "Slippage v" << SLIPPAGE_VERSION << "\n";
+    std::cout << "Boat slip assignment system for marina clubs\n";
+    std::cout << "\n";
+}
+
+void printHelp(const char *programName) {
+    printVersion();
+    std::cout << "USAGE:\n";
+    std::cout << "  " << programName << " --slips <slips.csv> --members <members.csv>\n";
+    std::cout << "  " << programName << " --version\n";
+    std::cout << "  " << programName << " --help\n";
+    std::cout << "\n";
+    std::cout << "DESCRIPTION:\n";
+    std::cout << "  Assigns boat slips to marina club members based on:\n";
+    std::cout << "    - Boat and slip dimensions (boats must fit)\n";
+    std::cout << "    - Member priority (lower IDs have higher priority)\n";
+    std::cout << "    - Current slip occupancy and preferences\n";
+    std::cout << "    - Permanent vs. temporary assignments\n";
+    std::cout << "\n";
+    std::cout << "REQUIRED ARGUMENTS:\n";
+    std::cout << "  --slips <file>     CSV file containing slip information\n";
+    std::cout << "  --members <file>   CSV file containing member information\n";
+    std::cout << "\n";
+    std::cout << "OPTIONS:\n";
+    std::cout << "  --help, -h         Show this help message and exit\n";
+    std::cout << "  --version, -v      Show version information and exit\n";
+    std::cout << "\n";
+    std::cout << "INPUT FILE FORMATS:\n";
+    std::cout << "\n";
+    std::cout << "  slips.csv format:\n";
+    std::cout << "    slip_id,max_length_ft,max_length_in,max_width_ft,max_width_in\n";
+    std::cout << "    S1,20,0,10,0\n";
+    std::cout << "    S2,25,6,12,0\n";
+    std::cout << "\n";
+    std::cout << "  members.csv format:\n";
+    std::cout << "    member_id,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,current_slip,is_permanent\n";
+    std::cout << "    M001,18,6,8,0,S1,0\n";
+    std::cout << "    M002,22,0,10,0,S2,1\n";
+    std::cout << "\n";
+    std::cout << "OUTPUT:\n";
+    std::cout << "  Results are written to stdout in CSV format with columns:\n";
+    std::cout << "    member_id,assigned_slip,status,boat_length_ft,boat_length_in,\n";
+    std::cout << "    boat_width_ft,boat_width_in,comment\n";
+    std::cout << "\n";
+    std::cout << "  Status values:\n";
+    std::cout << "    PERMANENT   - Member has permanent assignment\n";
+    std::cout << "    SAME        - Member kept their current slip\n";
+    std::cout << "    NEW         - Member assigned to different slip\n";
+    std::cout << "    UNASSIGNED  - Member did not receive assignment\n";
+    std::cout << "\n";
+    std::cout << "EXAMPLES:\n";
+    std::cout << "  # Basic usage\n";
+    std::cout << "  " << programName << " --slips slips.csv --members members.csv\n";
+    std::cout << "\n";
+    std::cout << "  # Save output to file\n";
+    std::cout << "  " << programName << " --slips slips.csv --members members.csv > assignments.csv\n";
+    std::cout << "\n";
+    std::cout << "  # Show version\n";
+    std::cout << "  " << programName << " --version\n";
+    std::cout << "\n";
+    std::cout << "DOCUMENTATION:\n";
+    std::cout << "  For detailed assignment rules, see:\n";
+    std::cout << "    /usr/share/doc/slippage/ASSIGNMENT_RULES.md\n";
+    std::cout << "  Or online at: https://github.com/yourusername/slippage\n";
+    std::cout << "\n";
+}
+
+void printUsage(const char *programName) {
+    std::cerr << "Error: Missing required arguments\n\n";
+    std::cerr << "Usage: " << programName << " --slips <slips.csv> --members <members.csv>\n";
+    std::cerr << "Try '" << programName << " --help' for more information.\n";
+}
+
+int main(int argc, char *argv[]) {
+    // Handle no arguments
+    if (argc == 1) {
+        printUsage(argv[0]);
+        return 1;
+    }
+
+    std::string slipsFile;
+    std::string membersFile;
+    
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--slips") == 0 && i + 1 < argc) {
+            slipsFile = argv[++i];
+        }
+        else if (std::strcmp(argv[i], "--members") == 0 && i + 1 < argc) {
+            membersFile = argv[++i];
+        }
+        else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
+            printHelp(argv[0]);
+            return 0;
+        }
+        else if (std::strcmp(argv[i], "--version") == 0 || std::strcmp(argv[i], "-v") == 0) {
+            printVersion();
+            return 0;
+        }
+        else if (std::strcmp(argv[i], "--slips") == 0 || std::strcmp(argv[i], "--members") == 0) {
+            std::cerr << "Error: " << argv[i] << " requires an argument\n\n";
+            std::cerr << "Try '" << argv[0] << " --help' for more information.\n";
+            return 1;
+        }
+        else {
+            std::cerr << "Error: Unknown argument '" << argv[i] << "'\n\n";
+            std::cerr << "Try '" << argv[0] << " --help' for more information.\n";
+            return 1;
+        }
+    }
+    
+    if (slipsFile.empty() || membersFile.empty()) {
+        printUsage(argv[0]);
+        return 1;
+    }
+    
+    try {
+        auto slips = CsvParser::parseSlips(slipsFile);
+        auto members = CsvParser::parseMembers(membersFile);
+        
+        AssignmentEngine engine(std::move(members), std::move(slips));
+        auto assignments = engine.assign();
+        
+        CsvParser::writeAssignments(assignments);
+        
+        return 0;
+    }
+    catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << "\n";
+        return 1;
+    }
+}

@@ -1,0 +1,12 @@
+slippage (1.0.0) unstable; urgency=medium
+
+  * Initial release
+  * Priority-based boat slip assignment
+  * Permanent member protection
+  * Smart eviction and reassignment
+  * Size-based protection
+  * Comprehensive testing suite
+  * Comment warnings for oversized boats
+  * UNASSIGNED status for members without slips
+
+ -- Ray <ray@example.com>  Sat, 30 Nov 2024 06:00:00 +0000

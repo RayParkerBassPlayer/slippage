@@ -1,0 +1,17 @@
+Source: slippage
+Section: misc
+Priority: optional
+Maintainer: Ray <ray@example.com>
+Build-Depends: debhelper (>= 10), cmake (>= 3.10), g++ (>= 7)
+Standards-Version: 4.1.3
+Homepage: https://github.com/yourusername/slippage
+
+Package: slippage
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Boat slip assignment system for marina clubs
+ A command-line application that assigns boat slips to marina club
+ members based on boat dimensions, member priority, and slip availability.
+ .
+ Features include priority-based assignment, permanent member protection,
+ smart eviction and reassignment, and best-fit algorithms.
