@@ -72,6 +72,9 @@ ctest --test-dir build --output-on-failure
 
 # Verbose with file output (progress to stdout, CSV to file)
 ./build/slippage --slips test_slips.csv --members test_members.csv --output output.csv --verbose
+
+# Ignore boat length when fitting (only check width)
+./build/slippage --slips test_slips.csv --members test_members.csv --ignore-length
 ```
 
 ## Packaging
@@ -104,8 +107,8 @@ The engine maintains two critical maps:
 6. Loop until no changes occur (stable assignment reached)
 
 **Data Models** (`dimensions.h/cpp`, `slip.h/cpp`, `member.h/cpp`, `assignment.h/cpp`):
-- `Dimensions`: Stores boat/slip dimensions in total inches for precise comparison
-- `Slip`: Slip ID and maximum dimensions; provides `fits()` method
+- `Dimensions`: Stores boat/slip dimensions in total inches for precise comparison; provides `fitsInWidthOnly()` for width-only checks
+- `Slip`: Slip ID and maximum dimensions; provides `fits()` method and `fitsWidthOnly()` for --ignore-length mode
 - `Member`: Member ID, boat dimensions, current slip, permanent flag; implements comparison operators for priority
 - `Assignment`: Result structure with status (PERMANENT, SAME, NEW, UNASSIGNED)
 
@@ -135,6 +138,8 @@ The engine maintains two critical maps:
 **Best-Fit Selection**: When finding alternatives, system chooses smallest fitting slip by area (length × width) to minimize waste.
 
 **Iterative Eviction**: Evicted members are automatically reconsidered. Algorithm loops until stable (no more changes).
+
+**Ignore-Length Mode (`--ignore-length`)**: When enabled, only boat width is checked for fitting. Boats can be longer than slips. Length differences are shown in assignment comments (e.g., "NOTE: boat is 3' 6\" longer than slip").
 
 ## Code Style Conventions
 

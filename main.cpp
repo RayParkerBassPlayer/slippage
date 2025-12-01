@@ -33,6 +33,8 @@ void printHelp(const char *programName) {
     std::cout << "OPTIONS:\n";
     std::cout << "  --output <file>    Write assignments to file instead of stdout\n";
     std::cout << "  --verbose          Print detailed assignment progress (phases and passes)\n";
+    std::cout << "  --ignore-length    Only check width when determining fit (show length\n";
+    std::cout << "                     differences in comments)\n";
     std::cout << "  --help, -h         Show this help message and exit\n";
     std::cout << "  --version, -v      Show version information and exit\n";
     std::cout << "\n";
@@ -104,6 +106,7 @@ int main(int argc, char *argv[]) {
     std::string membersFile;
     std::string outputFile;
     bool verbose = false;
+    bool ignoreLength = false;
     
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--slips") == 0 && i + 1 < argc) {
@@ -117,6 +120,9 @@ int main(int argc, char *argv[]) {
         }
         else if (std::strcmp(argv[i], "--verbose") == 0) {
             verbose = true;
+        }
+        else if (std::strcmp(argv[i], "--ignore-length") == 0) {
+            ignoreLength = true;
         }
         else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
             printHelp(argv[0]);
@@ -149,6 +155,7 @@ int main(int argc, char *argv[]) {
         
         AssignmentEngine engine(std::move(members), std::move(slips));
         engine.setVerbose(verbose);
+        engine.setIgnoreLength(ignoreLength);
         auto assignments = engine.assign();
         
         if (outputFile.empty())

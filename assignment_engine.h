@@ -27,6 +27,7 @@ class AssignmentEngine {
     std::string generateUnassignedComment(const Member *member) const;
     bool slipFits(const Slip *slip, const Dimensions &boatDimensions) const;
     std::string generateLengthComment(const Slip *slip, const Dimensions &boatDimensions) const;
+    void printStatistics(const std::vector<Assignment> &assignments) const;
 
 public:
     AssignmentEngine(std::vector<Member> members, std::vector<Slip> slips);

@@ -55,22 +55,9 @@ static std::string quoteCsvField(const std::string &field) {
         return field;
     }
     
-    // Check if field needs quoting (contains comma, quote, or newline)
-    bool needsQuoting = false;
-    
-    for (char c : field)
-    {
-        if (c == ',' || c == '"' || c == '\n' || c == '\r')
-        {
-            needsQuoting = true;
-            break;
-        }
-    }
-    
-    if (!needsQuoting)
-    {
-        return field;
-    }
+    // Always quote non-empty comment fields for consistency and easier parsing
+    // This ensures all comments are treated uniformly regardless of content
+    bool needsQuoting = true;
     
     // Quote the field and escape internal quotes by doubling them
     std::ostringstream result;

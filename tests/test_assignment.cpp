@@ -345,3 +345,120 @@ TEST_CASE("Evicted member marked UNASSIGNED when no alternative slip available",
     REQUIRE(m1Assigned);
     REQUIRE(m2Unassigned);
 }
+
+TEST_CASE("Ignore length: boat too long but fits width-wise", "[assignment][ignore_length]") {
+    std::vector<Slip> slips;
+    slips.emplace_back("S1", 20, 0, 10, 0);
+    
+    std::vector<Member> members;
+    members.emplace_back("M1", 25, 0, 8, 0, std::nullopt, false);
+    
+    AssignmentEngine engine(std::move(members), std::move(slips));
+    engine.setIgnoreLength(true);
+    auto assignments = engine.assign();
+    
+    REQUIRE(assignments.size() == 1);
+    REQUIRE(assignments[0].memberId() == "M1");
+    REQUIRE(assignments[0].slipId() == "S1");
+    REQUIRE(assignments[0].status() == Assignment::Status::NEW);
+    REQUIRE(assignments[0].comment() == "NOTE: boat is 5' longer than slip");
+}
+
+TEST_CASE("Ignore length: boat shorter than slip", "[assignment][ignore_length]") {
+    std::vector<Slip> slips;
+    slips.emplace_back("S1", 25, 0, 10, 0);
+    
+    std::vector<Member> members;
+    members.emplace_back("M1", 20, 6, 8, 0, std::nullopt, false);
+    
+    AssignmentEngine engine(std::move(members), std::move(slips));
+    engine.setIgnoreLength(true);
+    auto assignments = engine.assign();
+    
+    REQUIRE(assignments.size() == 1);
+    REQUIRE(assignments[0].memberId() == "M1");
+    REQUIRE(assignments[0].slipId() == "S1");
+    REQUIRE(assignments[0].status() == Assignment::Status::NEW);
+    REQUIRE(assignments[0].comment() == "NOTE: boat is 4' 6\" shorter than slip");
+}
+
+TEST_CASE("Ignore length: boat too wide still fails", "[assignment][ignore_length]") {
+    std::vector<Slip> slips;
+    slips.emplace_back("S1", 20, 0, 10, 0);
+    
+    std::vector<Member> members;
+    members.emplace_back("M1", 25, 0, 12, 0, std::nullopt, false);
+    
+    AssignmentEngine engine(std::move(members), std::move(slips));
+    engine.setIgnoreLength(true);
+    auto assignments = engine.assign();
+    
+    REQUIRE(assignments.size() == 1);
+    REQUIRE(assignments[0].status() == Assignment::Status::UNASSIGNED);
+}
+
+TEST_CASE("Ignore length: permanent member gets length comment", "[assignment][ignore_length][permanent]") {
+    std::vector<Slip> slips;
+    slips.emplace_back("S1", 20, 0, 10, 0);
+    
+    std::vector<Member> members;
+    members.emplace_back("M1", 22, 3, 8, 0, std::optional<std::string>("S1"), true);
+    
+    AssignmentEngine engine(std::move(members), std::move(slips));
+    engine.setIgnoreLength(true);
+    auto assignments = engine.assign();
+    
+    REQUIRE(assignments.size() == 1);
+    REQUIRE(assignments[0].status() == Assignment::Status::PERMANENT);
+    REQUIRE(assignments[0].comment() == "NOTE: boat is 2' 3\" longer than slip");
+}
+
+TEST_CASE("Ignore length: exact length match has no comment", "[assignment][ignore_length]") {
+    std::vector<Slip> slips;
+    slips.emplace_back("S1", 20, 0, 10, 0);
+    
+    std::vector<Member> members;
+    members.emplace_back("M1", 20, 0, 8, 0, std::nullopt, false);
+    
+    AssignmentEngine engine(std::move(members), std::move(slips));
+    engine.setIgnoreLength(true);
+    auto assignments = engine.assign();
+    
+    REQUIRE(assignments.size() == 1);
+    REQUIRE(assignments[0].slipId() == "S1");
+    REQUIRE(assignments[0].comment().empty());
+}
+
+TEST_CASE("Ignore length: best-fit still uses smallest slip", "[assignment][ignore_length][best_fit]") {
+    std::vector<Slip> slips;
+    slips.emplace_back("S1", 30, 0, 15, 0);
+    slips.emplace_back("S2", 20, 0, 10, 0);
+    slips.emplace_back("S3", 25, 0, 12, 0);
+    
+    std::vector<Member> members;
+    members.emplace_back("M1", 25, 0, 8, 0, std::nullopt, false);
+    
+    AssignmentEngine engine(std::move(members), std::move(slips));
+    engine.setIgnoreLength(true);
+    auto assignments = engine.assign();
+    
+    REQUIRE(assignments.size() == 1);
+    REQUIRE(assignments[0].slipId() == "S2");
+    REQUIRE(assignments[0].comment() == "NOTE: boat is 5' longer than slip");
+}
+
+TEST_CASE("Ignore length: doesn't affect width-only fits", "[assignment][ignore_length]") {
+    std::vector<Slip> slips;
+    slips.emplace_back("S1", 30, 0, 10, 0);
+    
+    std::vector<Member> members;
+    members.emplace_back("M1", 15, 0, 8, 0, std::nullopt, false);
+    
+    AssignmentEngine engine(std::move(members), std::move(slips));
+    engine.setIgnoreLength(true);
+    auto assignments = engine.assign();
+    
+    REQUIRE(assignments.size() == 1);
+    REQUIRE(assignments[0].slipId() == "S1");
+    REQUIRE(assignments[0].comment() == "NOTE: boat is 15' shorter than slip");
+}

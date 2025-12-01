@@ -71,6 +71,9 @@ sudo cmake --install build
 
 # Combine verbose with file output
 ./build/slippage --slips slips.csv --members members.csv --output assignments.csv --verbose
+
+# Ignore boat length when fitting (only check width)
+./build/slippage --slips slips.csv --members members.csv --ignore-length
 ```
 
 ### Command-Line Options
@@ -88,6 +91,8 @@ REQUIRED ARGUMENTS:
 OPTIONS:
   --output <file>    Write assignments to file instead of stdout
   --verbose          Print detailed assignment progress (phases and passes)
+  --ignore-length    Only check width when determining fit (show length
+                     differences in comments)
   --help, -h         Show help message and exit
   --version, -v      Show version information and exit
 ```
@@ -140,7 +145,7 @@ The program outputs assignments in CSV format:
 member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,comment
 M1,S5,SAME,20,0,10,0,
 M2,S3,SAME,18,6,9,0,
-M100,S10,PERMANENT,22,0,11,0,"WARNING: Boat does not fit in assigned slip"
+M100,S10,PERMANENT,22,0,11,0,"NOTE: Boat does not fit in assigned slip"
 M150,,UNASSIGNED,35,0,14,0,"Evicted - outranked by higher priority member(s), all 10 suitable slips taken"
 ```
 
@@ -152,7 +157,8 @@ M150,,UNASSIGNED,35,0,14,0,"Evicted - outranked by higher priority member(s), al
 
 **Comment field:**
 - Usually empty for normal assignments
-- For permanent members: `WARNING: Boat does not fit in assigned slip` indicates data issue
+- For permanent members: `NOTE: Boat does not fit in assigned slip` indicates data issue
+- With `--ignore-length` flag: shows length difference (e.g., `NOTE: boat is 3' 6" longer than slip`)
 - For unassigned members, provides diagnostic reason:
   - `Boat too large for all available slips`
   - `Evicted - boat doesn't fit previous slip, all X suitable slips taken`

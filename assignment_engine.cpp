@@ -17,6 +17,10 @@ std::vector<Assignment> AssignmentEngine::assign() {
     assignPermanentMembers(assignments);
     assignRemainingMembers(assignments);
     
+    if (mVerbose) {
+        printStatistics(assignments);
+    }
+    
     return assignments;
 }
 
@@ -57,10 +61,20 @@ void AssignmentEngine::assignPermanentMembers(std::vector<Assignment> &assignmen
             assignMemberToSlip(&member, slipId);
             std::string comment = "";
 
-            // Check if boat actually fits - add warning if not
+            // Check if boat actually fits - add note if not
             // Note: We still assign it since it's permanent, but flag the issue
-            if (!slip->fits(member.boatDimensions())) {
-                comment = "WARNING: Boat does not fit in assigned slip";
+            if (!slipFits(slip, member.boatDimensions())) {
+                comment = "NOTE: Boat does not fit in assigned slip";
+            }
+            
+            // Add length difference comment if ignoring length
+            std::string lengthComment = generateLengthComment(slip, member.boatDimensions());
+            if (!lengthComment.empty()) {
+                if (!comment.empty()) {
+                    comment += "; " + lengthComment;
+                } else {
+                    comment = lengthComment;
+                }
             }
 
             assignments.emplace_back(member.id(), slipId, 
@@ -148,7 +162,7 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
                 Slip *currentSlip = findSlipById(currentSlipId);
 
                 // Check if current slip exists and boat fits
-                if (currentSlip && currentSlip->fits(member->boatDimensions())) {
+                if (currentSlip && slipFits(currentSlip, member->boatDimensions())) {
                     auto occupantIt = mSlipOccupant.find(currentSlipId);
 
                     // Case 1: Slip is available (not occupied)
@@ -244,8 +258,15 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
         if (member->currentSlip().has_value() && member->currentSlip().value() == slipId) {
             status = Assignment::Status::SAME;
         }
+        
+        // Add length difference comment if ignoring length
+        Slip *assignedSlip = findSlipById(slipId);
+        std::string lengthComment = "";
+        if (assignedSlip) {
+            lengthComment = generateLengthComment(assignedSlip, member->boatDimensions());
+        }
 
-        assignments.emplace_back(member->id(), slipId, status, member->boatDimensions());
+        assignments.emplace_back(member->id(), slipId, status, member->boatDimensions(), lengthComment);
     }
 
     // STEP 5: Generate output for all unassigned members
@@ -321,7 +342,7 @@ std::string AssignmentEngine::generateUnassignedComment(const Member *member) co
     
     for (const auto &slip : mSlips)
     {
-        if (slip.fits(member->boatDimensions()))
+        if (slipFits(&slip, member->boatDimensions()))
         {
             anySlipFits = true;
             fittingSlipCount++;
@@ -349,7 +370,7 @@ std::string AssignmentEngine::generateUnassignedComment(const Member *member) co
             return "Evicted - previous slip no longer exists";
         }
         
-        if (!currentSlip->fits(member->boatDimensions()))
+        if (!slipFits(currentSlip, member->boatDimensions()))
         {
             if (fittingSlipCount > 0)
             {
@@ -406,7 +427,7 @@ Slip *AssignmentEngine::findBestAvailableSlip(const Dimensions &boatDimensions, 
         }
 
         // Skip slips that are too small for the boat
-        if (!slip.fits(boatDimensions)) {
+        if (!slipFits(&slip, boatDimensions)) {
             continue;
         }
 
@@ -455,7 +476,74 @@ std::string AssignmentEngine::generateLengthComment(const Slip *slip, const Dime
     }
     
     if (diffInches > 0) {
-        return "Boat is " + lengthStr + " longer than slip";
+        return "NOTE: boat is " + lengthStr + " longer than slip";
     }
-    return "Boat is " + lengthStr + " shorter than slip";
+    return "NOTE: boat is " + lengthStr + " shorter than slip";
+}
+
+// Print summary statistics for verbose mode.
+void AssignmentEngine::printStatistics(const std::vector<Assignment> &assignments) const {
+    int permanentCount = 0;
+    int sameCount = 0;
+    int newCount = 0;
+    int unassignedCount = 0;
+    
+    for (const auto &assignment : assignments) {
+        switch (assignment.status()) {
+            case Assignment::Status::PERMANENT:
+                permanentCount++;
+                break;
+            case Assignment::Status::SAME:
+                sameCount++;
+                break;
+            case Assignment::Status::NEW:
+                newCount++;
+                break;
+            case Assignment::Status::UNASSIGNED:
+                unassignedCount++;
+                break;
+        }
+    }
+    
+    int totalPlaced = permanentCount + sameCount + newCount;
+    
+    // Find empty slips
+    std::vector<const Slip *> emptySlips;
+    for (const auto &slip : mSlips) {
+        if (mSlipOccupant.find(slip.id()) == mSlipOccupant.end()) {
+            emptySlips.push_back(&slip);
+        }
+    }
+    
+    std::cout << "\n===== SUMMARY STATISTICS =====\n";
+    std::cout << "Permanent assignments: " << permanentCount << "\n";
+    std::cout << "Boats in same slip:    " << sameCount << "\n";
+    std::cout << "New assignments:       " << newCount << "\n";
+    std::cout << "Total boats placed:    " << totalPlaced << "\n";
+    std::cout << "Unassigned boats:      " << unassignedCount << "\n";
+    std::cout << "\n";
+    std::cout << "Total slips:           " << mSlips.size() << "\n";
+    std::cout << "Occupied slips:        " << mSlipOccupant.size() << "\n";
+    std::cout << "Empty slips:           " << emptySlips.size() << "\n";
+    
+    if (!emptySlips.empty()) {
+        std::cout << "\nEmpty slip list:\n";
+        for (const auto *slip : emptySlips) {
+            int lengthFt = slip->maxDimensions().lengthInches() / 12;
+            int lengthIn = slip->maxDimensions().lengthInches() % 12;
+            int widthFt = slip->maxDimensions().widthInches() / 12;
+            int widthIn = slip->maxDimensions().widthInches() % 12;
+            
+            std::cout << "  " << slip->id() << ": " << lengthFt << "' ";
+            if (lengthIn > 0) {
+                std::cout << lengthIn << "\" ";
+            }
+            std::cout << "x " << widthFt << "' ";
+            if (widthIn > 0) {
+                std::cout << widthIn << "\"";
+            }
+            std::cout << "\n";
+        }
+    }
+    std::cout << "\n";
 }

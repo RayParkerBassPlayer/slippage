@@ -86,9 +86,16 @@ No higher-priority member wants S2
 
 **A boat can only be assigned to a slip if the boat fits within the slip's dimensions.**
 
-- Both length and width must fit
+- By default, both length and width must fit
 - A 20' × 10' boat cannot fit in a 20' × 8' slip (width too small)
 - A 25' × 10' boat cannot fit in a 20' × 10' slip (length too large)
+
+**Ignore-Length Mode (`--ignore-length`):**
+When this flag is enabled, only the boat width is checked:
+- Boats can be longer than the slip length
+- Width must still fit within the slip's maximum width
+- Length differences are shown in the comment field (e.g., "NOTE: boat is 3' 6\" longer than slip")
+- Useful for marinas where boats can extend beyond slip boundaries
 
 **Size-Based Protection:**
 If a lower-priority member occupies a small slip that a higher-priority member's larger boat cannot fit into, the lower-priority member keeps that slip.
@@ -287,7 +294,10 @@ M2, S1, SAME
 ## Frequently Asked Questions
 
 **Q: What happens if my boat is too large for all slips?**  
-A: You will not receive a slip assignment. The system will not assign boats to slips they don't fit in.
+A: You will not receive a slip assignment. The system will not assign boats to slips they don't fit in. Note: If using `--ignore-length`, boats only need to fit by width.
+
+**Q: What does the `--ignore-length` flag do?**  
+A: With `--ignore-length`, the system only checks if the boat width fits the slip, ignoring length. Boats can be longer than slips. The comment field will show how much longer or shorter the boat is (e.g., "NOTE: boat is 2' 3\" longer than slip").
 
 **Q: Can a permanent member be moved to a different slip?**  
 A: No. Permanent members always keep their designated slip as long as their boat fits.
