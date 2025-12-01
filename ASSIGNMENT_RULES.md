@@ -110,17 +110,34 @@ Member M1 (large boat: 22' × 10') wants a slip
 
 ### Rule 5: Best Fit Selection
 
-**When finding a new slip, the system chooses the smallest slip that fits the boat.**
+**When finding a new slip, the system chooses the best fitting slip based on the current mode:**
 
+**Normal Mode:**
+- Selects the smallest slip that fits the boat
 - Minimizes wasted space
 - Calculated by total slip area (length × width)
 - Helps ensure larger slips remain available for larger boats
 
-**Example:**
+**Ignore-Length Mode (`--ignore-length`):**
+- **First priority**: Minimize boat overhang (amount boat is longer than slip)
+- **Second priority**: Among slips with equal overhang, select smallest by area
+- This ensures boats extend beyond slips as little as possible
+
+**Examples:**
+
+*Normal mode:*
 ```
 Available slips: S1 (20' × 10'), S2 (30' × 15'), S3 (25' × 12')
 Member's boat: 18' × 8'
-→ System assigns S1 (smallest fitting slip)
+→ System assigns S1 (smallest fitting slip by area)
+```
+
+*Ignore-length mode:*
+```
+Available slips: S1 (20' × 10'), S2 (28' × 10'), S3 (25' × 10')
+Member's boat: 27' × 8'
+→ System assigns S2 (0 overhang, boat is 1' shorter than slip)
+→ Not S3 (2' overhang) or S1 (7' overhang)
 ```
 
 ### Rule 6: Eviction and Reassignment
@@ -306,7 +323,7 @@ A: No. Permanent members always keep their designated slip as long as their boat
 A: Not necessarily. You'll only get reassigned if there's another available slip that fits your boat and isn't needed by someone with higher priority.
 
 **Q: How is "smallest fitting slip" determined?**  
-A: By total area (length × width). A 20' × 10' slip (200 sq ft) is smaller than a 25' × 12' slip (300 sq ft).
+A: In normal mode, by total area (length × width). A 20' × 10' slip (200 sq ft) is smaller than a 25' × 12' slip (300 sq ft). In `--ignore-length` mode, the system first minimizes boat overhang (how much longer the boat is than the slip), then uses area as a tiebreaker.
 
 **Q: Can I request a specific slip?**  
 A: The system uses your "current slip" field as your preferred slip. If you're already in a slip, the system will try to keep you there.

@@ -135,11 +135,13 @@ The engine maintains two critical maps:
 
 **Size-Based Protection**: A member keeps their slip if a higher-priority member's boat won't fit in it. Prevents futile evictions.
 
-**Best-Fit Selection**: When finding alternatives, system chooses smallest fitting slip by area (length × width) to minimize waste.
+**Best-Fit Selection**: When finding alternatives:
+- **Normal mode**: System chooses smallest fitting slip by area (length × width) to minimize waste
+- **Ignore-length mode**: System prioritizes slips that minimize boat overhang (length difference), then selects smallest by area among slips with equal overhang
 
 **Iterative Eviction**: Evicted members are automatically reconsidered. Algorithm loops until stable (no more changes).
 
-**Ignore-Length Mode (`--ignore-length`)**: When enabled, only boat width is checked for fitting. Boats can be longer than slips. Length differences are shown in assignment comments (e.g., "NOTE: boat is 3' 6\" longer than slip").
+**Ignore-Length Mode (`--ignore-length`)**: When enabled, only boat width is checked for fitting. Boats can be longer than slips. The algorithm prioritizes assigning boats to slips with the least length overhang to minimize the amount boats extend beyond their slips. Length differences are shown in assignment comments (e.g., "NOTE: boat is 3' 6\" longer than slip").
 
 ## Code Style Conventions
 

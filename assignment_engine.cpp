@@ -402,9 +402,12 @@ std::string AssignmentEngine::generateUnassignedComment(const Member *member) co
 
 // Find the best available slip for a boat.
 //
-// "Best" is defined as the smallest slip (by area) that can fit the boat.
+// "Best" is defined based on mode:
+// - Normal mode: smallest slip by area that can fit the boat
+// - Ignore-length mode: slip with minimum length overhang, then by smallest area
+//
 // This minimizes wasted space and helps ensure larger slips remain available
-// for larger boats.
+// for larger boats. In ignore-length mode, it also minimizes boat overhang.
 //
 // Parameters:
 //   boatDimensions - dimensions of the boat to fit
@@ -418,6 +421,7 @@ std::string AssignmentEngine::generateUnassignedComment(const Member *member) co
 // occupancy and handling eviction if needed.
 Slip *AssignmentEngine::findBestAvailableSlip(const Dimensions &boatDimensions, const std::string &excludeSlipId) {
     Slip *bestSlip = nullptr;
+    int minOverhang = std::numeric_limits<int>::max();
     int minArea = std::numeric_limits<int>::max();
 
     for (auto &slip : mSlips) {
@@ -433,11 +437,30 @@ Slip *AssignmentEngine::findBestAvailableSlip(const Dimensions &boatDimensions, 
 
         // Calculate slip area (length × width)
         int area = slip.maxDimensions().lengthInches() * slip.maxDimensions().widthInches();
-
-        // Track the smallest slip that fits
-        if (area < minArea) {
-            minArea = area;
-            bestSlip = &slip;
+        
+        // In ignore-length mode, prioritize minimum overhang, then minimum area
+        if (mIgnoreLength) {
+            // Positive overhang means boat is longer than slip
+            int overhang = std::max(0, slip.lengthDifference(boatDimensions));
+            
+            // Prefer slip with less overhang
+            if (overhang < minOverhang) {
+                minOverhang = overhang;
+                minArea = area;
+                bestSlip = &slip;
+            }
+            // If overhang is the same, prefer smaller slip
+            else if (overhang == minOverhang && area < minArea) {
+                minArea = area;
+                bestSlip = &slip;
+            }
+        }
+        // In normal mode, just find smallest slip by area
+        else {
+            if (area < minArea) {
+                minArea = area;
+                bestSlip = &slip;
+            }
         }
     }
 
