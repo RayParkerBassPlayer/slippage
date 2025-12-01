@@ -7,3 +7,11 @@ Slip::Slip(const std::string &slipId, int feetLength, int inchesLength, int feet
 bool Slip::fits(const Dimensions &boatDimensions) const {
     return boatDimensions.fitsIn(mMaxDimensions);
 }
+
+bool Slip::fitsWidthOnly(const Dimensions &boatDimensions) const {
+    return boatDimensions.fitsInWidthOnly(mMaxDimensions);
+}
+
+int Slip::lengthDifference(const Dimensions &boatDimensions) const {
+    return boatDimensions.lengthDifferenceInches(mMaxDimensions);
+}

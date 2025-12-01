@@ -15,6 +15,8 @@ public:
     const Dimensions& maxDimensions() const { return mMaxDimensions; }
     
     bool fits(const Dimensions &boatDimensions) const;
+    bool fitsWidthOnly(const Dimensions &boatDimensions) const;
+    int lengthDifference(const Dimensions &boatDimensions) const;
 };
 
 #endif

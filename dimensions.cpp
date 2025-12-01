@@ -9,3 +9,11 @@ bool Dimensions::fitsIn(const Dimensions &container) const {
     return mLengthInches <= container.mLengthInches && 
            mWidthInches <= container.mWidthInches;
 }
+
+bool Dimensions::fitsInWidthOnly(const Dimensions &container) const {
+    return mWidthInches <= container.mWidthInches;
+}
+
+int Dimensions::lengthDifferenceInches(const Dimensions &container) const {
+    return mLengthInches - container.mLengthInches;
+}

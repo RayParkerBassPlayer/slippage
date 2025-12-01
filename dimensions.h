@@ -12,6 +12,8 @@ public:
     int widthInches() const { return mWidthInches; }
     
     bool fitsIn(const Dimensions &container) const;
+    bool fitsInWidthOnly(const Dimensions &container) const;
+    int lengthDifferenceInches(const Dimensions &container) const;
 };
 
 #endif
