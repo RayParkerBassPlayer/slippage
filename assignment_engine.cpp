@@ -422,3 +422,40 @@ Slip *AssignmentEngine::findBestAvailableSlip(const Dimensions &boatDimensions, 
 
     return bestSlip;
 }
+
+// Check if a boat fits in a slip, considering the ignore-length flag.
+bool AssignmentEngine::slipFits(const Slip *slip, const Dimensions &boatDimensions) const {
+    if (mIgnoreLength) {
+        return slip->fitsWidthOnly(boatDimensions);
+    }
+    return slip->fits(boatDimensions);
+}
+
+// Generate length difference comment when ignoring length.
+std::string AssignmentEngine::generateLengthComment(const Slip *slip, const Dimensions &boatDimensions) const {
+    if (!mIgnoreLength) {
+        return "";
+    }
+    
+    int diffInches = slip->lengthDifference(boatDimensions);
+    if (diffInches == 0) {
+        return "";
+    }
+    
+    int feet = std::abs(diffInches) / 12;
+    int inches = std::abs(diffInches) % 12;
+    std::string lengthStr;
+    
+    if (feet > 0 && inches > 0) {
+        lengthStr = std::to_string(feet) + "' " + std::to_string(inches) + "\"";
+    } else if (feet > 0) {
+        lengthStr = std::to_string(feet) + "'";
+    } else {
+        lengthStr = std::to_string(inches) + "\"";
+    }
+    
+    if (diffInches > 0) {
+        return "Boat is " + lengthStr + " longer than slip";
+    }
+    return "Boat is " + lengthStr + " shorter than slip";
+}
