@@ -173,18 +173,15 @@ int main(int argc, char *argv[]) {
         engine.setPricePerSqFt(pricePerSqFt);
         auto assignments = engine.assign();
         
-        if (outputFile.empty())
-        {
+        if (outputFile.empty()) {
             std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START\n";
             std::cout << assignments;
             std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END\n";
         }
-        else
-        {
+        else {
             std::ofstream outFile(outputFile);
             
-            if (!outFile)
-            {
+            if (!outFile) {
                 std::cerr << "Error: Cannot open output file '" << outputFile << "'\n";
                 return 1;
             }
@@ -192,8 +189,7 @@ int main(int argc, char *argv[]) {
             outFile << assignments;
             outFile.close();
             
-            if (verbose)
-            {
+            if (verbose) {
                 std::cout << "\nAssignments written to: " << outputFile << "\n";
             }
         }

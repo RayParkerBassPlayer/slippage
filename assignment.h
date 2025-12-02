@@ -39,8 +39,10 @@ public:
     bool upgraded() const { return mUpgraded; }
     
     void upgradeToPermament() {
-        mStatus = Status::PERMANENT;
-        mUpgraded = true;
+        if (mStatus != Status::PERMANENT) {
+            mStatus = Status::PERMANENT;
+            mUpgraded = true;
+        }
     }
     
     bool assigned() const;
