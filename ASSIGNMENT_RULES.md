@@ -32,6 +32,8 @@ Each assignment results in one of these statuses:
 | **NEW** | Member is assigned to a different slip than before |
 | **UNASSIGNED** | Member did not receive a slip assignment |
 
+**Note:** With the `--upgrade-status` flag, members with SAME status are automatically upgraded to PERMANENT status in the final output.
+
 ## Core Assignment Rules
 
 ### Rule 1: Permanent Members Are Protected
@@ -172,7 +174,33 @@ Iteration 2:
 Final result: All three members have slips
 ```
 
-### Rule 7: Unassigned Members Appear in Output
+### Rule 7: Tight Fit Warnings
+
+**Assignments with less than 6 inches of width clearance are flagged with a "TIGHT FIT" warning.**
+
+- When a boat's width is within 6 inches of the slip's width, a "TIGHT FIT" note appears in the comment field
+- This alerts marina staff to assignments with minimal width clearance
+- Can be combined with other notes (e.g., "NOTE: boat is 5' longer than slip; TIGHT FIT")
+
+### Rule 8: Price Calculation (Optional)
+
+**With `--price-per-sqft` flag, calculates dockage price based on slip/boat area.**
+
+- Price = max(boat area, slip area) × price per square foot
+- Uses the larger of boat or slip area to ensure fair pricing
+- Rounded to 2 decimal places
+- Unassigned members have a price of 0.0
+
+### Rule 9: Status Upgrade (Optional)
+
+**With `--upgrade-status` flag, members who keep their slip are upgraded to PERMANENT.**
+
+- Members with SAME status are automatically upgraded to PERMANENT
+- Upgrade happens after all assignments are complete
+- Already-permanent members are not marked as "upgraded"
+- Useful for rewarding member retention
+
+### Rule 10: Unassigned Members Appear in Output
 
 **If no available slip fits a member's boat, they appear in the output with UNASSIGNED status.**
 

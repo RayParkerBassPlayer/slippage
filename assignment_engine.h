@@ -14,6 +14,8 @@ class AssignmentEngine {
     std::map<const Member *, std::string> mMemberAssignment;
     bool mVerbose;
     bool mIgnoreLength;
+    bool mUpgradeStatus;
+    double mPricePerSqFt;
     
     void assignPermanentMembers(std::vector<Assignment> &assignments);
     void assignRemainingMembers(std::vector<Assignment> &assignments);
@@ -27,6 +29,7 @@ class AssignmentEngine {
     std::string generateUnassignedComment(const Member *member) const;
     bool slipFits(const Slip *slip, const Dimensions &boatDimensions) const;
     std::string generateLengthComment(const Slip *slip, const Dimensions &boatDimensions) const;
+    std::string generateWidthMarginNote(const Slip *slip, const Dimensions &boatDimensions) const;
     void printStatistics(const std::vector<Assignment> &assignments) const;
 
 public:
@@ -34,6 +37,8 @@ public:
     
     void setVerbose(bool verbose) { mVerbose = verbose; }
     void setIgnoreLength(bool ignoreLength) { mIgnoreLength = ignoreLength; }
+    void setUpgradeStatus(bool upgradeStatus) { mUpgradeStatus = upgradeStatus; }
+    void setPricePerSqFt(double pricePerSqFt) { mPricePerSqFt = pricePerSqFt; }
     std::vector<Assignment> assign();
 };
 

@@ -75,6 +75,12 @@ ctest --test-dir build --output-on-failure
 
 # Ignore boat length when fitting (only check width)
 ./build/slippage --slips test_slips.csv --members test_members.csv --ignore-length
+
+# Calculate price per square foot (e.g., $2.75/sqft)
+./build/slippage --slips test_slips.csv --members test_members.csv --price-per-sqft 2.75
+
+# Upgrade members who keep their slip to permanent status
+./build/slippage --slips test_slips.csv --members test_members.csv --upgrade-status
 ```
 
 ## Packaging
@@ -101,16 +107,18 @@ The engine maintains two critical maps:
 **Assignment Algorithm Flow**:
 1. Sort members by priority (lower ID = higher priority)
 2. For each unassigned member, try current slip first (minimize disruption)
-3. If current slip unavailable, find best-fit alternative (smallest slip that fits)
+3. If current slip unavailable, find best-fit alternative (smallest slip that fits, with width margin as tie-breaker)
 4. Higher-priority members can evict lower-priority non-permanent members
 5. Evicted members are reconsidered in next iteration
 6. Loop until no changes occur (stable assignment reached)
+7. Add comments for tight fits (< 6" width clearance), length overhangs, or unassignment reasons
+8. Calculate price if requested (max of boat/slip area × price-per-sqft)
 
 **Data Models** (`dimensions.h/cpp`, `slip.h/cpp`, `member.h/cpp`, `assignment.h/cpp`):
 - `Dimensions`: Stores boat/slip dimensions in total inches for precise comparison; provides `fitsInWidthOnly()` for width-only checks
 - `Slip`: Slip ID and maximum dimensions; provides `fits()` method and `fitsWidthOnly()` for --ignore-length mode
 - `Member`: Member ID, boat dimensions, current slip, permanent flag; implements comparison operators for priority
-- `Assignment`: Result structure with status (PERMANENT, SAME, NEW, UNASSIGNED)
+- `Assignment`: Result structure with status (PERMANENT, SAME, NEW, UNASSIGNED), boat and slip dimensions, price, and comment
 
 **CsvParser** (`csv_parser.h/cpp`): Handles CSV I/O using csv-parser library
 - `parseMembers()`: Reads members.csv
@@ -136,12 +144,28 @@ The engine maintains two critical maps:
 **Size-Based Protection**: A member keeps their slip if a higher-priority member's boat won't fit in it. Prevents futile evictions.
 
 **Best-Fit Selection**: When finding alternatives:
-- **Normal mode**: System chooses smallest fitting slip by area (length × width) to minimize waste
-- **Ignore-length mode**: System prioritizes slips that minimize boat overhang (length difference), then selects smallest by area among slips with equal overhang
+- **Normal mode**: System chooses smallest fitting slip by area (length × width) to minimize waste; width margin used as tie-breaker when areas are equal
+- **Ignore-length mode**: System prioritizes slips that minimize boat overhang (length difference), then selects smallest by area among slips with equal overhang, then uses width margin as final tie-breaker
 
 **Iterative Eviction**: Evicted members are automatically reconsidered. Algorithm loops until stable (no more changes).
 
 **Ignore-Length Mode (`--ignore-length`)**: When enabled, only boat width is checked for fitting. Boats can be longer than slips. The algorithm prioritizes assigning boats to slips with the least length overhang to minimize the amount boats extend beyond their slips. Length differences are shown in assignment comments (e.g., "NOTE: boat is 3' 6\" longer than slip").
+
+**Tight Fit Detection**: When a boat's width is less than 6 inches narrower than the slip width, a "TIGHT FIT" note is added to the assignment comment. This alerts users to assignments with minimal width clearance.
+
+**Price Calculation (`--price-per-sqft`)**: When enabled with a price value (e.g., 2.75), calculates the rental/dockage price for each assignment:
+- Price = max(boat area, slip area) × price per square foot
+- Uses the larger of boat or slip area to ensure fair pricing
+- Rounded to 2 decimal places
+- Unassigned members have price of 0.0
+- Adds a 'price' column to CSV output
+
+**Upgrade Status (`--upgrade-status`)**: When enabled, members who keep their current slip (SAME status) are upgraded to PERMANENT status:
+- Upgrade happens in final pass after all assignments are complete
+- Only affects members with SAME status (not NEW, not already PERMANENT)
+- Upgraded members have `upgraded=true` in CSV output
+- Already-permanent members remain `upgraded=false`
+- Adds an 'upgraded' column to CSV output
 
 ## Code Style Conventions
 
@@ -151,14 +175,12 @@ Follow these C++ coding standards (enforced by user rules):
   - Correct: `void save(const std::string &name, Member *member)`
   - Wrong: `void save(const std::string& name, Member* member)`
 
-- **No nested braces**: Place opening braces on separate lines for if/else, try/catch
+- **else/else if/catch on new lines**: Opening brace at end of line, but else/else if/catch on new line
   ```cpp
   // Correct
-  if (condition)
-  {
+  if (condition) {
   }
-  else
-  {
+  else {
   }
   
   // Wrong
@@ -222,7 +244,11 @@ Tests use Catch2 v2 framework in `tests/test_assignment.cpp`. The test file cont
 - Permanent member protection
 - Size-based protection
 - Iterative reassignment
-- Best-fit selection
+- Best-fit selection with width priority tie-breaking
+- Tight fit warnings
+- Price calculation (various scenarios)
+- Upgrade-status feature
+- Ignore-length mode
 - Edge cases (no slips, no fits, multiple evictions)
 
 When adding tests, follow the existing pattern:

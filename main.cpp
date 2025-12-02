@@ -35,6 +35,11 @@ void printHelp(const char *programName) {
     std::cout << "  --verbose          Print detailed assignment progress (phases and passes)\n";
     std::cout << "  --ignore-length    Only check width when determining fit (show length\n";
     std::cout << "                     differences in comments)\n";
+    std::cout << "  --upgrade-status   Members who keep their current slip are upgraded to\n";
+    std::cout << "                     PERMANENT status; adds 'upgraded' column to output\n";
+    std::cout << "  --price-per-sqft <amount>\n";
+    std::cout << "                     Calculate price per square foot (uses larger of boat\n";
+    std::cout << "                     or slip area); adds 'price' column to output\n";
     std::cout << "  --help, -h         Show this help message and exit\n";
     std::cout << "  --version, -v      Show version information and exit\n";
     std::cout << "\n";
@@ -53,7 +58,7 @@ void printHelp(const char *programName) {
     std::cout << "OUTPUT:\n";
     std::cout << "  Results are written to stdout (or file if --output specified) in CSV format:\n";
     std::cout << "    member_id,assigned_slip,status,boat_length_ft,boat_length_in,\n";
-    std::cout << "    boat_width_ft,boat_width_in,comment\n";
+    std::cout << "    boat_width_ft,boat_width_in,price,comment\n";
     std::cout << "\n";
     std::cout << "  When writing to stdout, output is wrapped with markers:\n";
     std::cout << "    >>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START\n";
@@ -107,6 +112,8 @@ int main(int argc, char *argv[]) {
     std::string outputFile;
     bool verbose = false;
     bool ignoreLength = false;
+    bool upgradeStatus = false;
+    double pricePerSqFt = 0.0;
     
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--slips") == 0 && i + 1 < argc) {
@@ -124,6 +131,12 @@ int main(int argc, char *argv[]) {
         else if (std::strcmp(argv[i], "--ignore-length") == 0) {
             ignoreLength = true;
         }
+        else if (std::strcmp(argv[i], "--upgrade-status") == 0) {
+            upgradeStatus = true;
+        }
+        else if (std::strcmp(argv[i], "--price-per-sqft") == 0 && i + 1 < argc) {
+            pricePerSqFt = std::stod(argv[++i]);
+        }
         else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
             printHelp(argv[0]);
             return 0;
@@ -132,7 +145,7 @@ int main(int argc, char *argv[]) {
             printVersion();
             return 0;
         }
-        else if (std::strcmp(argv[i], "--slips") == 0 || std::strcmp(argv[i], "--members") == 0 || std::strcmp(argv[i], "--output") == 0) {
+        else if (std::strcmp(argv[i], "--slips") == 0 || std::strcmp(argv[i], "--members") == 0 || std::strcmp(argv[i], "--output") == 0 || std::strcmp(argv[i], "--price-per-sqft") == 0) {
             std::cerr << "Error: " << argv[i] << " requires an argument\n\n";
             std::cerr << "Try '" << argv[0] << " --help' for more information.\n";
             return 1;
@@ -156,6 +169,8 @@ int main(int argc, char *argv[]) {
         AssignmentEngine engine(std::move(members), std::move(slips));
         engine.setVerbose(verbose);
         engine.setIgnoreLength(ignoreLength);
+        engine.setUpgradeStatus(upgradeStatus);
+        engine.setPricePerSqFt(pricePerSqFt);
         auto assignments = engine.assign();
         
         if (outputFile.empty())

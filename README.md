@@ -8,8 +8,11 @@ A C++ command-line application that assigns boat slips to marina club members ba
 - **Permanent member protection**: Permanent assignments cannot be evicted
 - **Smart eviction and reassignment**: Higher-priority members can reclaim slips
 - **Size-based protection**: Members keep small slips that larger boats can't fit in
-- **Best-fit algorithm**: Assigns smallest suitable slip to minimize waste
+- **Best-fit algorithm**: Assigns smallest suitable slip to minimize waste, with width margin as tie-breaker
 - **Preference for current slips**: Tries to keep members in their existing slips
+- **Tight fit warnings**: Alerts when boats fit with less than 6 inches of width clearance (shown as "TIGHT FIT")
+- **Price calculation**: Optional per-square-foot pricing based on larger of boat or slip area
+- **Flexible length handling**: Optional mode to ignore length constraints, allowing boats to overhang slips
 
 ## Quick Start
 
@@ -74,6 +77,12 @@ sudo cmake --install build
 
 # Ignore boat length when fitting (only check width)
 ./build/slippage --slips slips.csv --members members.csv --ignore-length
+
+# Calculate price per square foot (e.g., $2.75/sqft)
+./build/slippage --slips slips.csv --members members.csv --price-per-sqft 2.75
+
+# Upgrade members who keep their slip to permanent status
+./build/slippage --slips slips.csv --members members.csv --upgrade-status
 ```
 
 ### Command-Line Options
@@ -93,6 +102,11 @@ OPTIONS:
   --verbose          Print detailed assignment progress (phases and passes)
   --ignore-length    Only check width when determining fit (show length
                      differences in comments)
+  --price-per-sqft <amount>
+                     Calculate price per square foot (uses larger of boat
+                     or slip area); adds 'price' column to output
+  --upgrade-status   Members who keep their current slip are upgraded to
+                     PERMANENT status; adds 'upgraded' column to output
   --help, -h         Show help message and exit
   --version, -v      Show version information and exit
 ```
@@ -142,11 +156,11 @@ S3,30,0,15,0
 The program outputs assignments in CSV format:
 
 ```csv
-member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,comment
-M1,S5,SAME,20,0,10,0,
-M2,S3,SAME,18,6,9,0,
-M100,S10,PERMANENT,22,0,11,0,"NOTE: Boat does not fit in assigned slip"
-M150,,UNASSIGNED,35,0,14,0,"Evicted - outranked by higher priority member(s), all 10 suitable slips taken"
+member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,price,upgraded,comment
+M1,S5,SAME,20,0,10,0,550.00,false,
+M2,S3,SAME,18,6,9,0,458.25,false,"TIGHT FIT"
+M100,S10,PERMANENT,22,0,11,0,726.00,false,"NOTE: Boat does not fit in assigned slip"
+M150,,UNASSIGNED,35,0,14,0,,false,"Evicted - outranked by higher priority member(s), all 10 suitable slips taken"
 ```
 
 **Status values:**
@@ -155,10 +169,22 @@ M150,,UNASSIGNED,35,0,14,0,"Evicted - outranked by higher priority member(s), al
 - `NEW`: Member assigned to a different slip
 - `UNASSIGNED`: Member did not receive a slip assignment
 
+**Price field:**
+- Only populated when `--price-per-sqft` is specified
+- Calculated as: `(max of boat area or slip area) × price per sqft`
+- Rounded to 2 decimal places
+- Empty for unassigned members
+
+**Upgraded field:**
+- `true`: Member was upgraded from SAME to PERMANENT status (with `--upgrade-status` flag)
+- `false`: Member was not upgraded (NEW, already PERMANENT, or UNASSIGNED)
+
 **Comment field:**
 - Usually empty for normal assignments
+- `TIGHT FIT`: Boat width is within 6 inches of slip width (tight clearance warning)
 - For permanent members: `NOTE: Boat does not fit in assigned slip` indicates data issue
 - With `--ignore-length` flag: shows length difference (e.g., `NOTE: boat is 3' 6" longer than slip`)
+- Multiple notes are separated by semicolons (e.g., `NOTE: boat is 5' longer than slip; TIGHT FIT`)
 - For unassigned members, provides diagnostic reason:
   - `Boat too large for all available slips`
   - `Evicted - boat doesn't fit previous slip, all X suitable slips taken`

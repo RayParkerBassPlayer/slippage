@@ -1,6 +1,7 @@
 #include "csv_parser.h"
 #include "external/csv-parser/single_include/csv.hpp"
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 #include <sstream>
 
@@ -50,8 +51,7 @@ std::vector<Slip> CsvParser::parseSlips(const std::string &filename) {
 
 // Escape and quote a CSV field if it contains special characters
 static std::string quoteCsvField(const std::string &field) {
-    if (field.empty())
-    {
+    if (field.empty()) {
         return field;
     }
     
@@ -63,14 +63,11 @@ static std::string quoteCsvField(const std::string &field) {
     std::ostringstream result;
     result << '"';
     
-    for (char c : field)
-    {
-        if (c == '"')
-        {
+    for (char c : field) {
+        if (c == '"') {
             result << "\"\"";
         }
-        else
-        {
+        else {
             result << c;
         }
     }
@@ -80,7 +77,7 @@ static std::string quoteCsvField(const std::string &field) {
 }
 
 void CsvParser::writeAssignments(const std::vector<Assignment> &assignments, std::ostream &out) {
-    out << "member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,comment\n";
+    out << "member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,price,upgraded,comment\n";
     
     for (const auto &assignment : assignments) {
         const auto &dims = assignment.boatDimensions();
@@ -96,7 +93,13 @@ void CsvParser::writeAssignments(const std::vector<Assignment> &assignments, std
             << lengthFeet << ","
             << lengthInches << ","
             << widthFeet << ","
-            << widthInches << ","
-            << quoteCsvField(assignment.comment()) << "\n";
+            << widthInches << ",";
+        
+        if (assignment.price() > 0.0) {
+            out << std::fixed << std::setprecision(2) << assignment.price();
+        }
+        
+        out << "," << (assignment.upgraded() ? "true" : "false")
+            << "," << quoteCsvField(assignment.comment()) << "\n";
     }
 }

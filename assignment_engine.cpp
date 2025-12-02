@@ -4,7 +4,7 @@
 #include <iostream>
 
 AssignmentEngine::AssignmentEngine(std::vector<Member> members, std::vector<Slip> slips)
-    : mMembers(std::move(members)), mSlips(std::move(slips)), mVerbose(false) {
+    : mMembers(std::move(members)), mSlips(std::move(slips)), mVerbose(false), mIgnoreLength(false), mUpgradeStatus(false), mPricePerSqFt(0.0) {
 }
 
 // Main assignment algorithm entry point.
@@ -16,6 +16,15 @@ std::vector<Assignment> AssignmentEngine::assign() {
     
     assignPermanentMembers(assignments);
     assignRemainingMembers(assignments);
+    
+    // Final pass: upgrade SAME status to PERMANENT if upgrade-status flag is set
+    if (mUpgradeStatus) {
+        for (auto &assignment : assignments) {
+            if (assignment.status() == Assignment::Status::SAME) {
+                assignment.upgradeToPermament();
+            }
+        }
+    }
     
     if (mVerbose) {
         printStatistics(assignments);
@@ -72,14 +81,27 @@ void AssignmentEngine::assignPermanentMembers(std::vector<Assignment> &assignmen
             if (!lengthComment.empty()) {
                 if (!comment.empty()) {
                     comment += "; " + lengthComment;
-                } else {
+                }
+                else {
                     comment = lengthComment;
+                }
+            }
+            
+            // Add tight fit note if boat is within 6 inches of slip width
+            std::string widthNote = generateWidthMarginNote(slip, member.boatDimensions());
+            if (!widthNote.empty()) {
+                if (!comment.empty()) {
+                    comment += "; " + widthNote;
+                }
+                else {
+                    comment = widthNote;
                 }
             }
 
             assignments.emplace_back(member.id(), slipId, 
                                     Assignment::Status::PERMANENT, 
-                                    member.boatDimensions(), comment);
+                                    member.boatDimensions(),
+                                    slip->maxDimensions(), comment, mPricePerSqFt);
             
             if (mVerbose)
             {
@@ -213,16 +235,13 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
             if (!assignedSlipId.empty()) {
                 assignMemberToSlip(member, assignedSlipId);
                 
-                if (mVerbose)
-                {
+                if (mVerbose) {
                     std::cout << "  Member " << member->id() << " -> Slip " << assignedSlipId;
                     
-                    if (member->currentSlip().has_value() && member->currentSlip().value() == assignedSlipId)
-                    {
+                    if (member->currentSlip().has_value() && member->currentSlip().value() == assignedSlipId) {
                         std::cout << " (keeping current)";
                     }
-                    else
-                    {
+                    else {
                         std::cout << " (new assignment)";
                     }
                     
@@ -261,12 +280,28 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
         
         // Add length difference comment if ignoring length
         Slip *assignedSlip = findSlipById(slipId);
-        std::string lengthComment = "";
+        std::string comment = "";
         if (assignedSlip) {
-            lengthComment = generateLengthComment(assignedSlip, member->boatDimensions());
+            std::string lengthComment = generateLengthComment(assignedSlip, member->boatDimensions());
+            if (!lengthComment.empty()) {
+                comment = lengthComment;
+            }
+            
+            // Add tight fit note if boat is within 6 inches of slip width
+            std::string widthNote = generateWidthMarginNote(assignedSlip, member->boatDimensions());
+            if (!widthNote.empty()) {
+                if (!comment.empty()) {
+                    comment += "; " + widthNote;
+                }
+                else {
+                    comment = widthNote;
+                }
+            }
         }
 
-        assignments.emplace_back(member->id(), slipId, status, member->boatDimensions(), lengthComment);
+        assignments.emplace_back(member->id(), slipId, status, 
+                                member->boatDimensions(), 
+                                assignedSlip->maxDimensions(), comment, mPricePerSqFt);
     }
 
     // STEP 5: Generate output for all unassigned members
@@ -277,7 +312,9 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
     for (const auto &member : assignableMembers) {
         if (!isMemberAssigned(member)) {
             std::string comment = generateUnassignedComment(member);
-            assignments.emplace_back(member->id(), "", Assignment::Status::UNASSIGNED, member->boatDimensions(), comment);
+            Dimensions emptyDimensions(0, 0, 0, 0);
+            assignments.emplace_back(member->id(), "", Assignment::Status::UNASSIGNED, 
+                                    member->boatDimensions(), emptyDimensions, comment, mPricePerSqFt);
         }
     }
 }
@@ -360,35 +397,23 @@ std::string AssignmentEngine::generateUnassignedComment(const Member *member) co
     }
     
     // Boat fits in some slips, check current slip status
-    if (hadCurrentSlip)
-    {
+    if (hadCurrentSlip) {
         const std::string &currentSlipId = member->currentSlip().value();
         Slip *currentSlip = findSlipById(currentSlipId);
         
-        if (!currentSlip)
-        {
+        if (!currentSlip) {
             return "Evicted - previous slip no longer exists";
         }
         
-        if (!slipFits(currentSlip, member->boatDimensions()))
-        {
-            if (fittingSlipCount > 0)
-            {
-                return "Evicted - boat doesn't fit previous slip, all " + std::to_string(fittingSlipCount) + " suitable slips taken";
-            }
-            
-            return "Evicted - boat doesn't fit previous slip";
-        }
-        
         // Check who occupies the current slip
+        // Note: We don't check if boat fits - if they had the slip, they keep it regardless
+        // The only reason for eviction is being bumped by another member
         auto occupantIt = mSlipOccupant.find(currentSlipId);
         
-        if (occupantIt != mSlipOccupant.end())
-        {
+        if (occupantIt != mSlipOccupant.end()) {
             const Member *occupant = occupantIt->second;
             
-            if (occupant->isPermanent())
-            {
+            if (occupant->isPermanent()) {
                 return "Evicted - previous slip taken by permanent member, all " + std::to_string(fittingSlipCount) + " suitable slips taken";
             }
             
@@ -423,6 +448,7 @@ Slip *AssignmentEngine::findBestAvailableSlip(const Dimensions &boatDimensions, 
     Slip *bestSlip = nullptr;
     int minOverhang = std::numeric_limits<int>::max();
     int minArea = std::numeric_limits<int>::max();
+    int maxWidthMargin = -1;
 
     for (auto &slip : mSlips) {
         // Skip the excluded slip (typically the boat's current slip)
@@ -438,7 +464,10 @@ Slip *AssignmentEngine::findBestAvailableSlip(const Dimensions &boatDimensions, 
         // Calculate slip area (length × width)
         int area = slip.maxDimensions().lengthInches() * slip.maxDimensions().widthInches();
         
-        // In ignore-length mode, prioritize minimum overhang, then minimum area
+        // Calculate width margin (how much extra width boat has)
+        int widthMargin = slip.maxDimensions().widthInches() - boatDimensions.widthInches();
+        
+        // In ignore-length mode, prioritize minimum overhang, then minimum area, then max width margin
         if (mIgnoreLength) {
             // Positive overhang means boat is longer than slip
             int overhang = std::max(0, slip.lengthDifference(boatDimensions));
@@ -447,18 +476,32 @@ Slip *AssignmentEngine::findBestAvailableSlip(const Dimensions &boatDimensions, 
             if (overhang < minOverhang) {
                 minOverhang = overhang;
                 minArea = area;
+                maxWidthMargin = widthMargin;
                 bestSlip = &slip;
             }
-            // If overhang is the same, prefer smaller slip
+            // If overhang is the same, prefer smaller area
             else if (overhang == minOverhang && area < minArea) {
                 minArea = area;
+                maxWidthMargin = widthMargin;
+                bestSlip = &slip;
+            }
+            // If overhang and area are the same, prefer max width margin
+            else if (overhang == minOverhang && area == minArea && widthMargin > maxWidthMargin) {
+                maxWidthMargin = widthMargin;
                 bestSlip = &slip;
             }
         }
-        // In normal mode, just find smallest slip by area
+        // In normal mode, prefer smallest slip by area, then max width margin as tie-breaker
         else {
+            // Prefer smaller slip by area
             if (area < minArea) {
                 minArea = area;
+                maxWidthMargin = widthMargin;
+                bestSlip = &slip;
+            }
+            // If area is the same, prefer max width margin
+            else if (area == minArea && widthMargin > maxWidthMargin) {
+                maxWidthMargin = widthMargin;
                 bestSlip = &slip;
             }
         }
@@ -492,9 +535,11 @@ std::string AssignmentEngine::generateLengthComment(const Slip *slip, const Dime
     
     if (feet > 0 && inches > 0) {
         lengthStr = std::to_string(feet) + "' " + std::to_string(inches) + "\"";
-    } else if (feet > 0) {
+    }
+    else if (feet > 0) {
         lengthStr = std::to_string(feet) + "'";
-    } else {
+    }
+    else {
         lengthStr = std::to_string(inches) + "\"";
     }
     
@@ -504,12 +549,24 @@ std::string AssignmentEngine::generateLengthComment(const Slip *slip, const Dime
     return "NOTE: boat is " + lengthStr + " shorter than slip";
 }
 
+// Generate width margin note if boat is less than 6 inches narrower than slip.
+std::string AssignmentEngine::generateWidthMarginNote(const Slip *slip, const Dimensions &boatDimensions) const {
+    int widthMargin = slip->maxDimensions().widthInches() - boatDimensions.widthInches();
+    
+    if (widthMargin >= 0 && widthMargin < 6) {
+        return "TIGHT FIT";
+    }
+    
+    return "";
+}
+
 // Print summary statistics for verbose mode.
 void AssignmentEngine::printStatistics(const std::vector<Assignment> &assignments) const {
     int permanentCount = 0;
     int sameCount = 0;
     int newCount = 0;
     int unassignedCount = 0;
+    int upgradedCount = 0;
     
     for (const auto &assignment : assignments) {
         switch (assignment.status()) {
@@ -526,6 +583,9 @@ void AssignmentEngine::printStatistics(const std::vector<Assignment> &assignment
                 unassignedCount++;
                 break;
         }
+        if (assignment.upgraded()) {
+            upgradedCount++;
+        }
     }
     
     int totalPlaced = permanentCount + sameCount + newCount;
@@ -540,7 +600,12 @@ void AssignmentEngine::printStatistics(const std::vector<Assignment> &assignment
     
     std::cout << "\n===== SUMMARY STATISTICS =====\n";
     std::cout << "Permanent assignments: " << permanentCount << "\n";
-    std::cout << "Boats in same slip:    " << sameCount << "\n";
+    if (upgradedCount > 0) {
+        std::cout << "Members upgraded:      " << upgradedCount << "\n";
+    }
+    else {
+        std::cout << "Boats in same slip:    " << sameCount << "\n";
+    }
     std::cout << "New assignments:       " << newCount << "\n";
     std::cout << "Total boats placed:    " << totalPlaced << "\n";
     std::cout << "Unassigned boats:      " << unassignedCount << "\n";

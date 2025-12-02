@@ -18,17 +18,30 @@ private:
     std::string mSlipId;
     Status mStatus;
     Dimensions mBoatDimensions;
+    Dimensions mSlipDimensions;
     std::string mComment;
+    double mPrice;
+    bool mUpgraded;
 
 public:
     Assignment(const std::string &memberId, const std::string &slipId, 
-               Status status, const Dimensions &dimensions, const std::string &comment = "");
+               Status status, const Dimensions &boatDimensions, 
+               const Dimensions &slipDimensions, const std::string &comment = "", 
+               double pricePerSqFt = 0.0, bool upgraded = false);
     
     const std::string& memberId() const { return mMemberId; }
     const std::string& slipId() const { return mSlipId; }
     Status status() const { return mStatus; }
     const Dimensions& boatDimensions() const { return mBoatDimensions; }
+    const Dimensions& slipDimensions() const { return mSlipDimensions; }
     const std::string& comment() const { return mComment; }
+    double price() const { return mPrice; }
+    bool upgraded() const { return mUpgraded; }
+    
+    void upgradeToPermament() {
+        mStatus = Status::PERMANENT;
+        mUpgraded = true;
+    }
     
     bool assigned() const;
     
