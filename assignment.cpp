@@ -4,11 +4,11 @@
 
 Assignment::Assignment(const std::string &memberId, const std::string &slipId,
                        Status status, const Dimensions &boatDimensions, 
-                       const Dimensions &slipDimensions, const std::string &comment, 
-                       double pricePerSqFt, bool upgraded)
+                       const Dimensions &slipDimensions, Member::DockStatus dockStatus,
+                       const std::string &comment, double pricePerSqFt, bool upgraded)
     : mMemberId(memberId), mSlipId(slipId), mStatus(status), 
       mBoatDimensions(boatDimensions), mSlipDimensions(slipDimensions), 
-      mComment(comment), mPrice(0.0), mUpgraded(upgraded) {
+      mComment(comment), mPrice(0.0), mUpgraded(upgraded), mDockStatus(dockStatus) {
     
     if (pricePerSqFt > 0.0 && status != Status::UNASSIGNED) {
         // Calculate square footage (convert from square inches to square feet)

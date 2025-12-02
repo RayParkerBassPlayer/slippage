@@ -2,6 +2,7 @@
 #define ASSIGNMENT_H
 
 #include "dimensions.h"
+#include "member.h"
 #include <string>
 
 class Assignment {
@@ -22,12 +23,13 @@ private:
     std::string mComment;
     double mPrice;
     bool mUpgraded;
+    Member::DockStatus mDockStatus;
 
 public:
     Assignment(const std::string &memberId, const std::string &slipId, 
                Status status, const Dimensions &boatDimensions, 
-               const Dimensions &slipDimensions, const std::string &comment = "", 
-               double pricePerSqFt = 0.0, bool upgraded = false);
+               const Dimensions &slipDimensions, Member::DockStatus dockStatus,
+               const std::string &comment = "", double pricePerSqFt = 0.0, bool upgraded = false);
     
     const std::string& memberId() const { return mMemberId; }
     const std::string& slipId() const { return mSlipId; }
@@ -37,6 +39,7 @@ public:
     const std::string& comment() const { return mComment; }
     double price() const { return mPrice; }
     bool upgraded() const { return mUpgraded; }
+    Member::DockStatus dockStatus() const { return mDockStatus; }
     
     void upgradeToPermament() {
         if (mStatus != Status::PERMANENT) {

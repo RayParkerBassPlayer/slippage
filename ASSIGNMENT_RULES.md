@@ -5,16 +5,27 @@ This document explains how the Slippage system assigns boat slips to club member
 ## Overview
 
 The slip assignment system allocates boat slips to members based on:
+- Dock status (five-level priority: permanent, year-off, waiting-list, temporary, unassigned)
+- Member ID (within each dock status level)
 - Boat and slip dimensions (boats must fit in slips)
-- Membership priority (determined by member ID)
 - Current slip occupancy
-- Permanent vs. temporary assignments
 
-The system aims to keep members in their current slips when possible, while ensuring higher-priority members get slips before lower-priority ones.
+The system aims to keep members in their current slips when possible, while ensuring higher-priority members get slips before lower-priority ones. Members who keep their current slip are automatically upgraded to permanent status.
 
 ## Priority System
 
-**Member priority is determined by member ID in alphabetical/numerical order:**
+**Member priority is determined by two factors:**
+
+### 1. Dock Status (Primary Priority)
+Members are processed in this order:
+1. **PERMANENT**: Highest priority, cannot be moved or evicted
+2. **WAITING_LIST**: Can evict TEMPORARY and UNASSIGNED members
+3. **TEMPORARY**: Can evict UNASSIGNED members
+4. **UNASSIGNED**: Lowest priority, cannot evict anyone
+5. **YEAR_OFF**: Not assigned (special case)
+
+### 2. Member ID (Tie-Breaker Within Status)
+Within each dock status level:
 - Lower member IDs have **higher priority**
 - Member "M1" has higher priority than "M2"
 - Member "100" has higher priority than "200"
@@ -25,50 +36,72 @@ Priority determines who gets preference when multiple members want the same slip
 
 Each assignment results in one of these statuses:
 
-| Status | Meaning |
-|--------|---------|
-| **PERMANENT** | Member has a permanent assignment and keeps their current slip |
-| **SAME** | Member keeps their current slip (non-permanent) |
-| **NEW** | Member is assigned to a different slip than before |
-| **UNASSIGNED** | Member did not receive a slip assignment |
+|| Status | Meaning |
+||--------|---------|
+|| **PERMANENT** | Member has a permanent assignment (either original or auto-upgraded) |
+|| **NEW** | Member is assigned to a different slip than before |
+|| **UNASSIGNED** | Member did not receive a slip assignment |
 
-**Note:** With the `--upgrade-status` flag, members with SAME status are automatically upgraded to PERMANENT status in the final output.
+**Note:** Members who keep their current slip are automatically upgraded to PERMANENT status. The `upgraded` field indicates whether this auto-upgrade occurred.
 
 ## Core Assignment Rules
 
-### Rule 1: Permanent Members Are Protected
+### Rule 1: Dock Status Determines Priority
 
-**Permanent members always keep their current slip and cannot be evicted.**
+**Members are processed in dock status order: PERMANENT → YEAR_OFF → WAITING_LIST → TEMPORARY → UNASSIGNED**
 
-- Permanent members keep their current slip **regardless of whether their boat fits**
-- If the boat doesn't fit, a warning is added to the comment field
-- Even higher-priority members cannot take a slip from a permanent member
-- Permanent members are processed first, before all other assignments
+- **PERMANENT**: Locked to their current slip, cannot be moved or evicted by anyone
+- **YEAR_OFF**: Not assigned (slip left empty), processed but not given a slip
+- **WAITING_LIST**: High priority, can evict TEMPORARY and UNASSIGNED members
+- **TEMPORARY**: Standard priority, can evict UNASSIGNED members
+- **UNASSIGNED**: Lowest priority, cannot evict anyone
+
+Within each dock status level, members with lower IDs have higher priority.
 
 **Example:**
 ```
 Member M100 (permanent) is in Slip S5
-Member M1 wants Slip S5
-→ M100 keeps S5, M1 must find another slip
+Member M1 (waiting-list) wants Slip S5
+→ M100 keeps S5, M1 must find another slip (cannot evict permanent)
+
+Member M2 (temporary) is in Slip S3  
+Member M1 (waiting-list) wants Slip S3
+→ M1 evicts M2 and takes S3 (waiting-list > temporary)
+→ System tries to reassign M2 to another slip
 ```
 
-### Rule 2: Priority Determines Slip Access
+### Rule 2: Within Same Dock Status, Member ID Determines Priority
 
-**When multiple members want the same slip, the member with higher priority (lower ID) gets it.**
+**When members have the same dock status, lower ID wins.**
 
-- Members are processed in priority order (sorted by ID ascending)
-- Higher-priority members can evict lower-priority members from slips
+- Members with the same dock status are processed in ID order (ascending)
+- Higher-priority members (lower ID) can evict lower-priority members (higher ID)
 - Evicted members are automatically reconsidered for other available slips
 
 **Example:**
 ```
-Member M3 currently has Slip S1
-Member M1 wants Slip S1
-→ M1 evicts M3 and takes S1
+Member M3 (temporary) currently has Slip S1
+Member M1 (temporary) wants Slip S1
+→ M1 evicts M3 and takes S1 (M1 < M3)
 → System tries to reassign M3 to another slip
 ```
 
-### Rule 3: Members Prefer Their Current Slip
+### Rule 3: Year-Off Members Are Not Assigned
+
+**Members with year-off status do not receive slip assignments.**
+
+- Their slip becomes available for other members
+- They appear in the output with status UNASSIGNED and comment "Year off - not assigned"
+- The slip field is empty in the output
+
+**Example:**
+```
+Member M5 (year-off) was in Slip S2
+→ M5 does not get assigned
+→ S2 becomes available for other members
+```
+
+### Rule 4: Members Prefer Their Current Slip
 
 **The system first tries to keep each member in their current slip.**
 
@@ -84,7 +117,7 @@ No higher-priority member wants S2
 → M5 stays in S2 (status: SAME)
 ```
 
-### Rule 4: Size Determines Eligibility
+### Rule 5: Size Determines Eligibility
 
 **A boat can only be assigned to a slip if the boat fits within the slip's dimensions.**
 
@@ -110,7 +143,7 @@ Member M1 (large boat: 22' × 10') wants a slip
 → M2 keeps S1 due to size protection
 ```
 
-### Rule 5: Best Fit Selection
+### Rule 6: Best Fit Selection
 
 **When finding a new slip, the system chooses the best fitting slip based on the current mode:**
 
@@ -142,7 +175,7 @@ Member's boat: 27' × 8'
 → Not S3 (2' overhang) or S1 (7' overhang)
 ```
 
-### Rule 6: Eviction and Reassignment
+### Rule 7: Eviction and Reassignment
 
 **When a member is evicted, they are automatically reconsidered for other slips.**
 
@@ -174,7 +207,7 @@ Iteration 2:
 Final result: All three members have slips
 ```
 
-### Rule 7: Tight Fit Warnings
+### Rule 8: Tight Fit Warnings
 
 **Assignments with less than 6 inches of width clearance are flagged with a "TIGHT FIT" warning.**
 
@@ -182,7 +215,7 @@ Final result: All three members have slips
 - This alerts marina staff to assignments with minimal width clearance
 - Can be combined with other notes (e.g., "NOTE: boat is 5' longer than slip; TIGHT FIT")
 
-### Rule 8: Price Calculation (Optional)
+### Rule 9: Price Calculation (Optional)
 
 **With `--price-per-sqft` flag, calculates dockage price based on slip/boat area.**
 
@@ -191,16 +224,17 @@ Final result: All three members have slips
 - Rounded to 2 decimal places
 - Unassigned members have a price of 0.0
 
-### Rule 9: Status Upgrade (Optional)
+### Rule 10: Automatic Status Upgrade
 
-**With `--upgrade-status` flag, members who keep their slip are upgraded to PERMANENT.**
+**Members who keep their current slip are automatically upgraded to PERMANENT status.**
 
-- Members with SAME status are automatically upgraded to PERMANENT
-- Upgrade happens after all assignments are complete
-- Already-permanent members are not marked as "upgraded"
-- Useful for rewarding member retention
+- Auto-upgrade happens for all members who retain their slip
+- Upgrade occurs after all assignments are complete
+- The `upgraded` field is set to `true` for auto-upgraded members
+- Already-permanent members have `upgraded=false` (they weren't upgraded, already were permanent)
+- This rewards member retention and provides stability
 
-### Rule 10: Unassigned Members Appear in Output
+### Rule 11: Unassigned Members Appear in Output
 
 **If no available slip fits a member's boat, they appear in the output with UNASSIGNED status.**
 
@@ -217,14 +251,17 @@ The system follows this process:
 
 ```
 1. Parse Input
-   ├─ Read members CSV (boat dimensions, current slips, permanent flags)
+   ├─ Read members CSV (boat dimensions, current slips, dock_status)
    └─ Read slips CSV (slip dimensions)
 
-2. Assign Permanent Members
-   └─ Lock permanent members in their current slips
+2. Phase 1: Assign Permanent Members
+   └─ Lock PERMANENT members in their current slips (cannot be moved)
 
-3. Process Non-Permanent Members (Iteratively)
-   ├─ Sort members by priority (ID ascending)
+3. Phase 2: Process Year-Off Members
+   └─ Mark YEAR_OFF members as unassigned, free up their slips
+
+4. Phase 3: Process Waiting-List Members (Iteratively)
+   ├─ Sort by member ID (ascending)
    ├─ For each unassigned member:
    │  ├─ Try to keep in current slip
    │  │  ├─ If available and fits → assign
@@ -235,8 +272,17 @@ The system follows this process:
    │     └─ If no slip found → leave unassigned
    └─ If any evictions occurred, repeat iteration
 
-4. Generate Output
-   └─ Write assignments to CSV with status
+5. Phase 4: Process Temporary Members (Iteratively)
+   └─ Same process as Phase 3
+
+6. Phase 5: Process Unassigned Members (Iteratively)
+   └─ Same process as Phase 3
+
+7. Auto-Upgrade
+   └─ Members who kept their current slip → upgraded to PERMANENT
+
+8. Generate Output
+   └─ Write assignments to CSV with status and dock_status
 ```
 
 ## Examples
@@ -345,7 +391,7 @@ A: You will not receive a slip assignment. The system will not assign boats to s
 A: With `--ignore-length`, the system only checks if the boat width fits the slip, ignoring length. Boats can be longer than slips. The comment field will show how much longer or shorter the boat is (e.g., "NOTE: boat is 2' 3\" longer than slip").
 
 **Q: Can a permanent member be moved to a different slip?**  
-A: No. Permanent members always keep their designated slip as long as their boat fits.
+A: No. Permanent members always keep their designated slip and cannot be moved or evicted by anyone.
 
 **Q: If I'm evicted, will I definitely get another slip?**  
 A: Not necessarily. You'll only get reassigned if there's another available slip that fits your boat and isn't needed by someone with higher priority.
@@ -357,7 +403,7 @@ A: In normal mode, by total area (length × width). A 20' × 10' slip (200 sq ft
 A: The system uses your "current slip" field as your preferred slip. If you're already in a slip, the system will try to keep you there.
 
 **Q: What determines my priority level?**  
-A: Your member ID. IDs are sorted alphabetically/numerically, with lower IDs having higher priority.
+A: Two factors: (1) Your dock status (permanent > waiting-list > temporary > unassigned), and (2) Your member ID within your dock status level (lower IDs = higher priority).
 
 ## Technical Notes
 

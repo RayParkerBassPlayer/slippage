@@ -79,8 +79,6 @@ ctest --test-dir build --output-on-failure
 # Calculate price per square foot (e.g., $2.75/sqft)
 ./build/slippage --slips test_slips.csv --members test_members.csv --price-per-sqft 2.75
 
-# Upgrade members who keep their slip to permanent status
-./build/slippage --slips test_slips.csv --members test_members.csv --upgrade-status
 ```
 
 ## Packaging
@@ -96,29 +94,35 @@ ctest --test-dir build --output-on-failure
 
 ### Core Components
 
-**AssignmentEngine** (`assignment_engine.h/cpp`): The heart of the system. Implements a two-phase assignment algorithm:
-- Phase 1: Lock permanent members into their designated slips (cannot be evicted)
-- Phase 2: Iterative priority-based assignment with eviction support. Runs until stable state (no more evictions)
+**AssignmentEngine** (`assignment_engine.h/cpp`): The heart of the system. Implements a multi-phase assignment algorithm:
+- Phase 1: Lock PERMANENT members into their designated slips (cannot be moved or evicted)
+- Phase 2: Process YEAR_OFF members (not assigned, slip freed)
+- Phase 3: Assign WAITING_LIST members (iterative with eviction support)
+- Phase 4: Assign TEMPORARY members (iterative with eviction support)
+- Phase 5: Assign UNASSIGNED members (iterative with eviction support)
+- Final: Auto-upgrade members who kept their slip to PERMANENT
 
 The engine maintains two critical maps:
 - `mSlipOccupant`: Maps slip IDs to currently assigned members
 - `mMemberAssignment`: Maps members to their assigned slip IDs
 
 **Assignment Algorithm Flow**:
-1. Sort members by priority (lower ID = higher priority)
-2. For each unassigned member, try current slip first (minimize disruption)
-3. If current slip unavailable, find best-fit alternative (smallest slip that fits, with width margin as tie-breaker)
-4. Higher-priority members can evict lower-priority non-permanent members
-5. Evicted members are reconsidered in next iteration
-6. Loop until no changes occur (stable assignment reached)
-7. Add comments for tight fits (< 6" width clearance), length overhangs, or unassignment reasons
-8. Calculate price if requested (max of boat/slip area × price-per-sqft)
+1. Process members by dock status priority: PERMANENT → YEAR_OFF → WAITING_LIST → TEMPORARY → UNASSIGNED
+2. Within each dock status, sort by member ID (lower = higher priority)
+3. For each unassigned member, try current slip first (minimize disruption)
+4. If current slip unavailable, find best-fit alternative (smallest slip that fits, with width margin as tie-breaker)
+5. Higher-priority members can evict lower-priority members (based on dock status first, then ID)
+6. Evicted members are reconsidered in next iteration
+7. Loop until no changes occur (stable assignment reached for that dock status)
+8. Add comments for tight fits (< 6" width clearance), length overhangs, or unassignment reasons
+9. Calculate price if requested (max of boat/slip area × price-per-sqft)
+10. Auto-upgrade members who kept their slip to PERMANENT status
 
 **Data Models** (`dimensions.h/cpp`, `slip.h/cpp`, `member.h/cpp`, `assignment.h/cpp`):
 - `Dimensions`: Stores boat/slip dimensions in total inches for precise comparison; provides `fitsInWidthOnly()` for width-only checks
 - `Slip`: Slip ID and maximum dimensions; provides `fits()` method and `fitsWidthOnly()` for --ignore-length mode
-- `Member`: Member ID, boat dimensions, current slip, permanent flag; implements comparison operators for priority
-- `Assignment`: Result structure with status (PERMANENT, SAME, NEW, UNASSIGNED), boat and slip dimensions, price, and comment
+- `Member`: Member ID, boat dimensions, current slip, dock status (enum: PERMANENT, YEAR_OFF, WAITING_LIST, TEMPORARY, UNASSIGNED); implements comparison operators for priority
+- `Assignment`: Result structure with status (PERMANENT, NEW, UNASSIGNED), dock status, boat and slip dimensions, price, upgraded flag, and comment
 
 **CsvParser** (`csv_parser.h/cpp`): Handles CSV I/O using csv-parser library
 - `parseMembers()`: Reads members.csv
@@ -137,9 +141,13 @@ The engine maintains two critical maps:
 
 ### Key Algorithm Concepts
 
-**Priority-Based Assignment**: Members with lower IDs get preference. Member "M1" > "M2" > "M100" in priority.
+**Dock Status Priority**: Primary priority is dock status: PERMANENT (locked) > WAITING_LIST > TEMPORARY > UNASSIGNED. YEAR_OFF members are not assigned.
 
-**Permanent Member Protection**: Permanent members cannot be evicted, even by higher-priority members. They are locked in during Phase 1.
+**Member ID Priority**: Within each dock status level, members with lower IDs get preference. Member "M1" > "M2" > "M100" in priority.
+
+**Permanent Member Protection**: Permanent members cannot be moved or evicted by anyone. They are locked in during Phase 1.
+
+**Year-Off Handling**: Year-off members do not receive slip assignments. Their slips become available for other members.
 
 **Size-Based Protection**: A member keeps their slip if a higher-priority member's boat won't fit in it. Prevents futile evictions.
 
@@ -160,12 +168,11 @@ The engine maintains two critical maps:
 - Unassigned members have price of 0.0
 - Adds a 'price' column to CSV output
 
-**Upgrade Status (`--upgrade-status`)**: When enabled, members who keep their current slip (SAME status) are upgraded to PERMANENT status:
+**Automatic Status Upgrade**: Members who keep their current slip are automatically upgraded to PERMANENT status:
 - Upgrade happens in final pass after all assignments are complete
-- Only affects members with SAME status (not NEW, not already PERMANENT)
 - Upgraded members have `upgraded=true` in CSV output
-- Already-permanent members remain `upgraded=false`
-- Adds an 'upgraded' column to CSV output
+- Already-permanent members have `upgraded=false` (they weren't upgraded, already were permanent)
+- The 'upgraded' column is always present in CSV output
 
 ## Code Style Conventions
 
@@ -225,7 +232,7 @@ Follow these C++ coding standards (enforced by user rules):
   // With public enum needed by private member
   class Assignment {
   public:
-      enum class Status { PERMANENT, SAME, NEW };
+      enum class Status { PERMANENT, NEW, UNASSIGNED };
   
   private:
       Status mStatus;  // uses public enum
@@ -241,13 +248,15 @@ Follow these C++ coding standards (enforced by user rules):
 Tests use Catch2 v2 framework in `tests/test_assignment.cpp`. The test file contains comprehensive scenarios covering:
 - Basic assignments
 - Priority-based eviction
+- Dock status priority (permanent, year-off, waiting-list, temporary, unassigned)
 - Permanent member protection
+- Year-off member handling
 - Size-based protection
 - Iterative reassignment
 - Best-fit selection with width priority tie-breaking
 - Tight fit warnings
 - Price calculation (various scenarios)
-- Upgrade-status feature
+- Automatic status upgrade
 - Ignore-length mode
 - Edge cases (no slips, no fits, multiple evictions)
 
@@ -258,7 +267,7 @@ TEST_CASE("Description of what you're testing", "[category]") {
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -273,9 +282,10 @@ TEST_CASE("Description of what you're testing", "[category]") {
 
 **Verbose Mode (`--verbose`)**:
 - Prints detailed assignment progress to stdout
-- Shows Phase 1 (permanent assignments) and Phase 2 (iterative assignments)
-- Displays pass numbers (Pass 1, Pass 2, etc.) and individual decisions
+- Shows all 5 phases: PERMANENT → YEAR_OFF → WAITING_LIST → TEMPORARY → UNASSIGNED
+- Displays pass numbers (Pass 1, Pass 2, etc.) and individual decisions within each phase
 - Useful for understanding assignment behavior and debugging
+- When verbose is enabled, stdout markers are NOT shown (CSV output appears without wrapping)
 
 **File Output (`--output <file>`)**:
 - Writes CSV to specified file instead of stdout
@@ -283,10 +293,11 @@ TEST_CASE("Description of what you're testing", "[category]") {
 - Can be combined with `--verbose` (progress to stdout, CSV to file)
 
 **Stdout Markers**:
-- When outputting to stdout (no `--output`), CSV is wrapped:
+- When outputting to stdout (no `--output`) WITHOUT `--verbose`, CSV is wrapped:
   - `>>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START`
   - `>>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END`
 - Makes programmatic extraction easy from combined output
+- With `--verbose`, markers are NOT shown (verbose output and CSV are both on stdout)
 
 **Unassigned Diagnostics**:
 - Comment field explains why each member wasn't assigned
@@ -326,4 +337,4 @@ The repository includes VSCode configurations in `.vscode/`:
 
 **Iterative Assignment**: The assignment algorithm uses a `changesMade` flag. Any eviction sets this to true, triggering another iteration. This ensures all members are reconsidered after evictions.
 
-**Status Determination**: Assignment status is determined by comparing final assigned slip with member's current slip. If they match: SAME, if different: NEW, if none: UNASSIGNED.
+**Status Determination**: Assignment status is determined by the outcome. If member kept their slip: PERMANENT (auto-upgraded), if different slip: NEW, if no slip: UNASSIGNED.

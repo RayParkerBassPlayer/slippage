@@ -12,7 +12,7 @@ TEST_CASE("Basic slip assignment", "[assignment]") {
     slips.emplace_back("S2", 25, 0, 12, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, Member::DockStatus::UNASSIGNED);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -23,13 +23,13 @@ TEST_CASE("Basic slip assignment", "[assignment]") {
     REQUIRE(assignments[0].status() == Assignment::Status::NEW);
 }
 
-TEST_CASE("Member keeps current slip", "[assignment]") {
+TEST_CASE("Member keeps current slip (auto-upgraded)", "[assignment]") {
     std::vector<Slip> slips;
     slips.emplace_back("S1", 20, 0, 10, 0);
     slips.emplace_back("S2", 25, 0, 12, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S2"), false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S2"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -37,7 +37,8 @@ TEST_CASE("Member keeps current slip", "[assignment]") {
     REQUIRE(assignments.size() == 1);
     REQUIRE(assignments[0].memberId() == "M1");
     REQUIRE(assignments[0].slipId() == "S2");
-    REQUIRE(assignments[0].status() == Assignment::Status::SAME);
+    REQUIRE(assignments[0].status() == Assignment::Status::PERMANENT);
+    REQUIRE(assignments[0].upgraded() == true);
 }
 
 TEST_CASE("Permanent member assignment", "[assignment][permanent]") {
@@ -45,7 +46,7 @@ TEST_CASE("Permanent member assignment", "[assignment][permanent]") {
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), true);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::PERMANENT);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -61,8 +62,8 @@ TEST_CASE("Higher priority member evicts lower priority from current slip", "[as
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
+    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -88,8 +89,8 @@ TEST_CASE("Higher priority member evicts lower priority, lower priority gets not
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M3", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
+    members.emplace_back("M3", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -115,8 +116,8 @@ TEST_CASE("Permanent members cannot be evicted", "[assignment][permanent][evicti
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), true);
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
+    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::PERMANENT);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -144,9 +145,9 @@ TEST_CASE("Multiple members with eviction and reassignment", "[assignment][evict
     slips.emplace_back("S3", 22, 0, 11, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M3", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
-    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S2"), false);
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
+    members.emplace_back("M3", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S2"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -176,7 +177,7 @@ TEST_CASE("Boat too large for all slips", "[assignment][no_fit]") {
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 12, 0, std::nullopt, false);
+    members.emplace_back("M1", 25, 0, 12, 0, std::nullopt, Member::DockStatus::UNASSIGNED);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -192,7 +193,7 @@ TEST_CASE("Smallest fitting slip is chosen", "[assignment][best_fit]") {
     slips.emplace_back("S3", 25, 0, 12, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, Member::DockStatus::UNASSIGNED);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -209,11 +210,11 @@ TEST_CASE("Complex scenario with permanent, eviction, and new assignments", "[as
     slips.emplace_back("S4", 22, 0, 11, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M5", 18, 0, 8, 0, std::optional<std::string>("S2"), true);
-    members.emplace_back("M4", 18, 0, 8, 0, std::optional<std::string>("S3"), false);
-    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S3"), false);
-    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, false);
-    members.emplace_back("M3", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
+    members.emplace_back("M5", 18, 0, 8, 0, std::optional<std::string>("S2"), Member::DockStatus::PERMANENT);
+    members.emplace_back("M4", 18, 0, 8, 0, std::optional<std::string>("S3"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S3"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
+    members.emplace_back("M3", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -233,7 +234,8 @@ TEST_CASE("Complex scenario with permanent, eviction, and new assignments", "[as
         }
         else if (assignment.memberId() == "M2") {
             REQUIRE(assignment.slipId() == "S3");
-            REQUIRE(assignment.status() == Assignment::Status::SAME);
+            REQUIRE(assignment.status() == Assignment::Status::PERMANENT);
+            REQUIRE(assignment.upgraded() == true);
             m2Found = true;
         }
         else if (assignment.memberId() == "M3") {
@@ -253,8 +255,8 @@ TEST_CASE("Evicted member finds alternative slip", "[assignment][eviction][reass
     slips.emplace_back("S2", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
+    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -281,8 +283,8 @@ TEST_CASE("Lower priority member keeps small slip that higher priority cannot fi
     slips.emplace_back("S2", 25, 0, 12, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M2", 14, 0, 7, 0, std::optional<std::string>("S1"), false);
-    members.emplace_back("M1", 22, 0, 10, 0, std::optional<std::string>("S2"), false);
+    members.emplace_back("M2", 14, 0, 7, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M1", 22, 0, 10, 0, std::optional<std::string>("S2"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -308,7 +310,7 @@ TEST_CASE("Member marked UNASSIGNED when boat too large for all slips", "[assign
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 12, 0, std::nullopt, false);
+    members.emplace_back("M1", 25, 0, 12, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -324,8 +326,8 @@ TEST_CASE("Evicted member marked UNASSIGNED when no alternative slip available",
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
+    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -351,7 +353,7 @@ TEST_CASE("Ignore length: boat too long but fits width-wise", "[assignment][igno
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 25, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -369,7 +371,7 @@ TEST_CASE("Ignore length: boat shorter than slip", "[assignment][ignore_length]"
     slips.emplace_back("S1", 25, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 20, 6, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 20, 6, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -387,7 +389,7 @@ TEST_CASE("Ignore length: boat too wide still fails", "[assignment][ignore_lengt
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 12, 0, std::nullopt, false);
+    members.emplace_back("M1", 25, 0, 12, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -402,7 +404,7 @@ TEST_CASE("Ignore length: permanent member gets length comment", "[assignment][i
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 22, 3, 8, 0, std::optional<std::string>("S1"), true);
+    members.emplace_back("M1", 22, 3, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::PERMANENT);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -418,7 +420,7 @@ TEST_CASE("Ignore length: exact length match has no comment", "[assignment][igno
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 20, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 20, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -436,7 +438,7 @@ TEST_CASE("Ignore length: best-fit minimizes overhang", "[assignment][ignore_len
     slips.emplace_back("S3", 25, 0, 12, 0);  // 0 overhang, medium area
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 25, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -453,7 +455,7 @@ TEST_CASE("Ignore length: doesn't affect width-only fits", "[assignment][ignore_
     slips.emplace_back("S1", 30, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 15, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 15, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -471,7 +473,7 @@ TEST_CASE("Ignore length: overhang prioritization with varying overhangs", "[ass
     slips.emplace_back("S3", 28, 0, 10, 0);  // 2' overhang
     
     std::vector<Member> members;
-    members.emplace_back("M1", 30, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 30, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -489,7 +491,7 @@ TEST_CASE("Tight fit warning when boat is 5 inches narrower than slip", "[assign
     slips.emplace_back("S1", 20, 0, 10, 5);  // 125" width
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 10, 0, std::nullopt, false);  // 120" width
+    members.emplace_back("M1", 18, 0, 10, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 120" width
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -504,7 +506,7 @@ TEST_CASE("No tight fit warning when boat is 6 inches narrower", "[assignment][t
     slips.emplace_back("S1", 20, 0, 10, 6);  // 126" width
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 10, 0, std::nullopt, false);  // 120" width
+    members.emplace_back("M1", 18, 0, 10, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 120" width
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -519,7 +521,7 @@ TEST_CASE("Tight fit warning with ignore-length comment", "[assignment][tight_fi
     slips.emplace_back("S1", 20, 0, 10, 3);  // 123" width
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 10, 0, std::nullopt, false);  // 120" width, 25' length
+    members.emplace_back("M1", 25, 0, 10, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 120" width, 25' length
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -538,7 +540,7 @@ TEST_CASE("Best fit prefers smallest area, width margin is tie-breaker", "[assig
     slips.emplace_back("S3", 30, 0, 11, 0);  // 396 sqft, 12" width margin
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 10, 0, std::nullopt, false);  // 120" width
+    members.emplace_back("M1", 18, 0, 10, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 120" width
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -555,7 +557,7 @@ TEST_CASE("Best fit: same width margin, prefer smaller area", "[assignment][best
     slips.emplace_back("S3", 20, 0, 11, 0);  // 264 sqft, 12" width margin
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 10, 0, std::nullopt, false);  // 120" width
+    members.emplace_back("M1", 18, 0, 10, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 120" width
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -572,7 +574,7 @@ TEST_CASE("Best fit with ignore-length: overhang prioritized, then area, then wi
     slips.emplace_back("S3", 20, 0, 12, 0);  // 5' overhang, 288 sqft, 24" width margin
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 10, 0, std::nullopt, false);  // 120" width, 25' length
+    members.emplace_back("M1", 25, 0, 10, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 120" width, 25' length
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setIgnoreLength(true);
@@ -589,7 +591,7 @@ TEST_CASE("Price calculation: boat area larger than slip area", "[assignment][pr
     slips.emplace_back("S1", 35, 0, 14, 0);  // 490 sqft, fits boat
     
     std::vector<Member> members;
-    members.emplace_back("M1", 32, 0, 13, 0, std::nullopt, false);  // 416 sqft
+    members.emplace_back("M1", 32, 0, 13, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 416 sqft
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setPricePerSqFt(2.50);
@@ -606,7 +608,7 @@ TEST_CASE("Price calculation: slip larger than boat", "[assignment][price]") {
     slips.emplace_back("S1", 40, 0, 15, 0);  // 600 sqft
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 10, 0, std::nullopt, false);  // 250 sqft
+    members.emplace_back("M1", 25, 0, 10, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 250 sqft
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setPricePerSqFt(3.00);
@@ -623,7 +625,7 @@ TEST_CASE("Price calculation: exact match", "[assignment][price]") {
     slips.emplace_back("S1", 25, 0, 10, 0);  // 250 sqft
     
     std::vector<Member> members;
-    members.emplace_back("M1", 25, 0, 10, 0, std::nullopt, false);  // 250 sqft
+    members.emplace_back("M1", 25, 0, 10, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // 250 sqft
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setPricePerSqFt(2.75);
@@ -640,7 +642,7 @@ TEST_CASE("Price calculation: unassigned members have zero price", "[assignment]
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 35, 0, 15, 0, std::nullopt, false);  // Too large
+    members.emplace_back("M1", 35, 0, 15, 0, std::nullopt, Member::DockStatus::TEMPORARY);  // Too large
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setPricePerSqFt(2.50);
@@ -656,7 +658,7 @@ TEST_CASE("Price calculation: without price-per-sqft set", "[assignment][price]"
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();
@@ -671,7 +673,7 @@ TEST_CASE("Price calculation: rounding to 2 decimal places", "[assignment][price
     slips.emplace_back("S1", 23, 6, 9, 6);  // 23.5' x 9.5' = 223.25 sqft
     
     std::vector<Member> members;
-    members.emplace_back("M1", 20, 0, 8, 6, std::nullopt, false);  // 20' x 8.5' = 170 sqft
+    members.emplace_back("M1", 20, 0, 8, 6, std::nullopt, Member::DockStatus::TEMPORARY);  // 20' x 8.5' = 170 sqft
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     engine.setPricePerSqFt(2.75);
@@ -690,11 +692,10 @@ TEST_CASE("Upgrade status: SAME becomes PERMANENT", "[assignment][upgrade]") {
     slips.emplace_back("S2", 25, 0, 12, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
-    members.emplace_back("M2", 22, 0, 10, 0, std::optional<std::string>("S2"), false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
+    members.emplace_back("M2", 22, 0, 10, 0, std::optional<std::string>("S2"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
-    engine.setUpgradeStatus(true);
     auto assignments = engine.assign();
     
     REQUIRE(assignments.size() == 2);
@@ -719,10 +720,9 @@ TEST_CASE("Upgrade status: NEW assignments not upgraded", "[assignment][upgrade]
     slips.emplace_back("S2", 25, 0, 12, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
-    engine.setUpgradeStatus(true);
     auto assignments = engine.assign();
     
     REQUIRE(assignments.size() == 1);
@@ -735,10 +735,9 @@ TEST_CASE("Upgrade status: Already PERMANENT members not marked as upgraded", "[
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), true);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::PERMANENT);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
-    engine.setUpgradeStatus(true);
     auto assignments = engine.assign();
     
     REQUIRE(assignments.size() == 1);
@@ -746,20 +745,19 @@ TEST_CASE("Upgrade status: Already PERMANENT members not marked as upgraded", "[
     REQUIRE(assignments[0].upgraded() == false);  // Was already permanent
 }
 
-TEST_CASE("Upgrade status: Without flag, SAME stays SAME", "[assignment][upgrade]") {
+TEST_CASE("Upgrade status: Always auto-upgrade SAME to PERMANENT", "[assignment][upgrade]") {
     std::vector<Slip> slips;
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
-    // Don't set upgrade status
     auto assignments = engine.assign();
     
     REQUIRE(assignments.size() == 1);
-    REQUIRE(assignments[0].status() == Assignment::Status::SAME);
-    REQUIRE(assignments[0].upgraded() == false);
+    REQUIRE(assignments[0].status() == Assignment::Status::PERMANENT);
+    REQUIRE(assignments[0].upgraded() == true);
 }
 
 TEST_CASE("Upgrade status: Mixed scenario", "[assignment][upgrade]") {
@@ -769,12 +767,11 @@ TEST_CASE("Upgrade status: Mixed scenario", "[assignment][upgrade]") {
     slips.emplace_back("S3", 30, 0, 15, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), false);  // Will keep S1 -> upgraded
-    members.emplace_back("M3", 22, 0, 10, 0, std::optional<std::string>("S2"), false);  // Will keep S2 -> upgraded
-    members.emplace_back("M4", 28, 0, 14, 0, std::optional<std::string>("S3"), true);  // Already permanent -> not upgraded
+    members.emplace_back("M2", 18, 0, 8, 0, std::optional<std::string>("S1"), Member::DockStatus::TEMPORARY);  // Will keep S1 -> upgraded
+    members.emplace_back("M3", 22, 0, 10, 0, std::optional<std::string>("S2"), Member::DockStatus::TEMPORARY);  // Will keep S2 -> upgraded
+    members.emplace_back("M4", 28, 0, 14, 0, std::optional<std::string>("S3"), Member::DockStatus::PERMANENT);  // Already permanent -> not upgraded
     
     AssignmentEngine engine(std::move(members), std::move(slips));
-    engine.setUpgradeStatus(true);
     auto assignments = engine.assign();
     
     REQUIRE(assignments.size() == 3);

@@ -4,8 +4,10 @@ A C++ command-line application that assigns boat slips to marina club members ba
 
 ## Features
 
-- **Priority-based assignment**: Members with lower IDs get preference
-- **Permanent member protection**: Permanent assignments cannot be evicted
+- **Dock status priority system**: Five-level priority system (permanent, year-off, waiting-list, temporary, unassigned)
+- **Priority-based assignment**: Within each status level, members with lower IDs get preference
+- **Permanent member protection**: Permanent members cannot be moved or evicted
+- **Automatic status upgrade**: Members who keep their slip are automatically upgraded to permanent
 - **Smart eviction and reassignment**: Higher-priority members can reclaim slips
 - **Size-based protection**: Members keep small slips that larger boats can't fit in
 - **Best-fit algorithm**: Assigns smallest suitable slip to minimize waste, with width margin as tie-breaker
@@ -81,8 +83,6 @@ sudo cmake --install build
 # Calculate price per square foot (e.g., $2.75/sqft)
 ./build/slippage --slips slips.csv --members members.csv --price-per-sqft 2.75
 
-# Upgrade members who keep their slip to permanent status
-./build/slippage --slips slips.csv --members members.csv --upgrade-status
 ```
 
 ### Command-Line Options
@@ -105,8 +105,6 @@ OPTIONS:
   --price-per-sqft <amount>
                      Calculate price per square foot (uses larger of boat
                      or slip area); adds 'price' column to output
-  --upgrade-status   Members who keep their current slip are upgraded to
-                     PERMANENT status; adds 'upgraded' column to output
   --help, -h         Show help message and exit
   --version, -v      Show version information and exit
 ```
@@ -118,10 +116,12 @@ OPTIONS:
 CSV file with member information:
 
 ```csv
-member_id,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,current_slip,is_permanent
-M1,20,0,10,0,S5,0
-M2,18,6,9,0,S3,0
-M100,22,0,11,0,S10,1
+member_id,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,current_slip,dock_status
+M1,20,0,10,0,S5,temporary
+M2,18,6,9,0,S3,waiting-list
+M100,22,0,11,0,S10,permanent
+M200,19,0,9,6,,unassigned
+M50,21,0,10,0,S7,year-off
 ```
 
 **Fields:**
@@ -131,7 +131,14 @@ M100,22,0,11,0,S10,1
 - `boat_width_ft`: Boat width/beam in feet (integer)
 - `boat_width_in`: Additional inches for boat width (integer, 0-11)
 - `current_slip`: Current slip ID or empty if none (string)
-- `is_permanent`: 1 if permanent assignment, 0 otherwise (integer)
+- `dock_status`: Member's dock status (string: permanent, year-off, waiting-list, temporary, unassigned)
+
+**Dock Status Values:**
+- `permanent`: Member has permanent assignment, cannot be moved or evicted
+- `year-off`: Member is taking a year off, will not be assigned (slip left empty)
+- `waiting-list`: High priority for assignment, can evict temporary and unassigned members
+- `temporary`: Standard priority, can evict unassigned members  
+- `unassigned`: New member seeking first assignment, lowest priority
 
 ### slips.csv
 
@@ -156,16 +163,17 @@ S3,30,0,15,0
 The program outputs assignments in CSV format:
 
 ```csv
-member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,price,upgraded,comment
-M1,S5,SAME,20,0,10,0,550.00,false,
-M2,S3,SAME,18,6,9,0,458.25,false,"TIGHT FIT"
-M100,S10,PERMANENT,22,0,11,0,726.00,false,"NOTE: Boat does not fit in assigned slip"
-M150,,UNASSIGNED,35,0,14,0,,false,"Evicted - outranked by higher priority member(s), all 10 suitable slips taken"
+member_id,assigned_slip,status,dock_status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,price,upgraded,comment
+M1,S5,PERMANENT,temporary,20,0,10,0,550.00,true,
+M2,S3,PERMANENT,waiting-list,18,6,9,0,458.25,true,"TIGHT FIT"
+M100,S10,PERMANENT,permanent,22,0,11,0,726.00,false,"NOTE: Boat does not fit in assigned slip"
+M50,,UNASSIGNED,year-off,21,0,10,0,0.00,false,"Year off - not assigned"
+M150,S8,NEW,temporary,19,0,9,6,462.00,false,
+M200,,UNASSIGNED,unassigned,35,0,14,0,0.00,false,"Boat too large for all available slips"
 ```
 
 **Status values:**
-- `PERMANENT`: Member has a permanent assignment
-- `SAME`: Member kept their current slip
+- `PERMANENT`: Member has a permanent assignment (either original or auto-upgraded)
 - `NEW`: Member assigned to a different slip
 - `UNASSIGNED`: Member did not receive a slip assignment
 
@@ -175,9 +183,14 @@ M150,,UNASSIGNED,35,0,14,0,,false,"Evicted - outranked by higher priority member
 - Rounded to 2 decimal places
 - Empty for unassigned members
 
+**Dock Status field:**
+- Shows the member's input dock status from the CSV
+- Indicates their priority level in the assignment system
+
 **Upgraded field:**
-- `true`: Member was upgraded from SAME to PERMANENT status (with `--upgrade-status` flag)
-- `false`: Member was not upgraded (NEW, already PERMANENT, or UNASSIGNED)
+- `true`: Member was automatically upgraded to PERMANENT (kept their current slip)
+- `false`: Member was not upgraded (NEW assignment, already PERMANENT, or UNASSIGNED)
+- Auto-upgrade happens for all members who keep their current slip
 
 **Comment field:**
 - Usually empty for normal assignments
@@ -193,7 +206,7 @@ M150,,UNASSIGNED,35,0,14,0,,false,"Evicted - outranked by higher priority member
 - Comments containing commas are properly quoted per CSV RFC 4180
 
 **Output modes:**
-- **Without `--output`**: CSV is written to stdout wrapped with markers:
+- **Without `--output` and without `--verbose`**: CSV is written to stdout wrapped with markers:
   ```
   >>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START
   [CSV content]
@@ -201,23 +214,38 @@ M150,,UNASSIGNED,35,0,14,0,,false,"Evicted - outranked by higher priority member
   ```
   This makes programmatic extraction easy
   
+- **With `--verbose`**: CSV output appears without markers (verbose progress goes to stdout)
 - **With `--output <file>`**: CSV is written directly to the specified file without markers
 
 **Verbose mode (`--verbose`):**
-- Shows Phase 1 (permanent assignments) and Phase 2 (iterative assignments)
+- Shows all assignment phases with detailed progress
+- Phase 1: Permanent member assignments
+- Phase 2: Year-off members (not assigned)
+- Phase 3: Waiting-list members
+- Phase 4: Temporary members
+- Phase 5: Unassigned members  
 - Displays pass numbers and individual assignment decisions
 - Example output:
   ```
   ===== PHASE 1: Permanent Member Assignments =====
-    Member M002 -> Slip B2 (PERMANENT)
+    Member M100 -> Slip S10 (PERMANENT)
   
-  ===== PHASE 2: Iterative Assignment =====
+  ===== PHASE 2: Year-Off Members =====
+    Member M50 (YEAR-OFF) - previous slip: S7
+  
+  ===== PHASE 3: waiting-list Members =====
   
   --- Pass 1 ---
-    Member M001 -> Slip A1 (keeping current)
-    Member M003 -> Slip B3 (new assignment)
+    Member M2 -> Slip S3 (keeping current)
   
-  Assignment complete after 1 pass(es)
+  Phase 3 complete after 1 pass(es)
+  
+  ===== PHASE 4: temporary Members =====
+  
+  --- Pass 1 ---
+    Member M1 -> Slip S5 (keeping current)
+  
+  Phase 4 complete after 1 pass(es)
   ```
 
 **Note:** All members appear in the output. Members who don't receive an assignment have an empty `assigned_slip` field and status `UNASSIGNED`.
@@ -228,13 +256,16 @@ For detailed information about how slips are assigned, see [ASSIGNMENT_RULES.md]
 
 ### Quick Summary
 
-1. **Permanent members** keep their slips and cannot be evicted
-2. **Priority** is determined by member ID (lower IDs = higher priority)
-3. Members **prefer to stay** in their current slip when possible
-4. **Higher-priority members** can evict lower-priority members
-5. **Size matters**: You can't evict someone if your boat won't fit in their slip
-6. System chooses **smallest fitting slip** to minimize waste
-7. **Evicted members** are automatically reconsidered for other slips
+1. **Dock status priority**: PERMANENT (locked) > WAITING_LIST > TEMPORARY > UNASSIGNED
+2. **Permanent members** keep their slips and cannot be moved or evicted
+3. **Year-off members** are not assigned (slip left available)
+4. **Within each dock status**, priority is determined by member ID (lower IDs = higher priority)
+5. Members **prefer to stay** in their current slip when possible
+6. **Higher-priority members** can evict lower-priority members (based on dock status first, then ID)
+7. **Size matters**: You can't evict someone if your boat won't fit in their slip
+8. System chooses **smallest fitting slip** to minimize waste
+9. **Evicted members** are automatically reconsidered for other slips
+10. **Auto-upgrade**: Members who keep their slip are automatically upgraded to PERMANENT
 
 ## Development
 
@@ -304,7 +335,7 @@ TEST_CASE("Your test description", "[tag]") {
     slips.emplace_back("S1", 20, 0, 10, 0);
     
     std::vector<Member> members;
-    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, false);
+    members.emplace_back("M1", 18, 0, 8, 0, std::nullopt, Member::DockStatus::TEMPORARY);
     
     AssignmentEngine engine(std::move(members), std::move(slips));
     auto assignments = engine.assign();

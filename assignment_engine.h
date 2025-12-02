@@ -14,14 +14,18 @@ class AssignmentEngine {
     std::map<const Member *, std::string> mMemberAssignment;
     bool mVerbose;
     bool mIgnoreLength;
-    bool mUpgradeStatus;
     double mPricePerSqFt;
     
     void assignPermanentMembers(std::vector<Assignment> &assignments);
+    void processYearOffMembers(std::vector<Assignment> &assignments);
     void assignRemainingMembers(std::vector<Assignment> &assignments);
     
+    bool canMemberEvict(const Member *member) const;
+    bool canEvictMember(const Member *evictingMember, const Member *occupant) const;
+    int getDockStatusPriority(Member::DockStatus status) const;
+    
     Slip *findSlipById(const std::string &slipId) const;
-    Slip *findBestAvailableSlip(const Dimensions &boatDimensions, const std::string &excludeSlipId = "");
+    Slip *findBestAvailableSlip(const Dimensions &boatDimensions, const Member *requestingMember, const std::string &excludeSlipId = "");
     Member *findMemberById(const std::string &memberId);
     void assignMemberToSlip(const Member *member, const std::string &slipId);
     void unassignMember(const Member *member);
@@ -37,7 +41,6 @@ public:
     
     void setVerbose(bool verbose) { mVerbose = verbose; }
     void setIgnoreLength(bool ignoreLength) { mIgnoreLength = ignoreLength; }
-    void setUpgradeStatus(bool upgradeStatus) { mUpgradeStatus = upgradeStatus; }
     void setPricePerSqFt(double pricePerSqFt) { mPricePerSqFt = pricePerSqFt; }
     std::vector<Assignment> assign();
 };

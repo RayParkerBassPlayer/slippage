@@ -35,8 +35,6 @@ void printHelp(const char *programName) {
     std::cout << "  --verbose          Print detailed assignment progress (phases and passes)\n";
     std::cout << "  --ignore-length    Only check width when determining fit (show length\n";
     std::cout << "                     differences in comments)\n";
-    std::cout << "  --upgrade-status   Members who keep their current slip are upgraded to\n";
-    std::cout << "                     PERMANENT status; adds 'upgraded' column to output\n";
     std::cout << "  --price-per-sqft <amount>\n";
     std::cout << "                     Calculate price per square foot (uses larger of boat\n";
     std::cout << "                     or slip area); adds 'price' column to output\n";
@@ -51,19 +49,22 @@ void printHelp(const char *programName) {
     std::cout << "    S2,25,6,12,0\n";
     std::cout << "\n";
     std::cout << "  members.csv format:\n";
-    std::cout << "    member_id,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,current_slip,is_permanent\n";
-    std::cout << "    M001,18,6,8,0,S1,0\n";
-    std::cout << "    M002,22,0,10,0,S2,1\n";
+    std::cout << "    member_id,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,current_slip,dock_status\n";
+    std::cout << "    M001,18,6,8,0,S1,temporary\n";
+    std::cout << "    M002,22,0,10,0,S2,permanent\n";
     std::cout << "\n";
     std::cout << "OUTPUT:\n";
     std::cout << "  Results are written to stdout (or file if --output specified) in CSV format:\n";
     std::cout << "    member_id,assigned_slip,status,boat_length_ft,boat_length_in,\n";
     std::cout << "    boat_width_ft,boat_width_in,price,comment\n";
     std::cout << "\n";
-    std::cout << "  When writing to stdout, output is wrapped with markers:\n";
+    std::cout << "  When writing to stdout without --verbose, output is wrapped with markers:\n";
     std::cout << "    >>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START\n";
     std::cout << "    [CSV content]\n";
     std::cout << "    >>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END\n";
+    std::cout << "\n";
+    std::cout << "  Note: Members who keep their current slip are automatically upgraded\n";
+    std::cout << "        to PERMANENT status; see 'upgraded' column in output.\n";
     std::cout << "\n";
     std::cout << "  Status values:\n";
     std::cout << "    PERMANENT   - Member has permanent assignment\n";
@@ -112,7 +113,6 @@ int main(int argc, char *argv[]) {
     std::string outputFile;
     bool verbose = false;
     bool ignoreLength = false;
-    bool upgradeStatus = false;
     double pricePerSqFt = 0.0;
     
     for (int i = 1; i < argc; ++i) {
@@ -130,9 +130,6 @@ int main(int argc, char *argv[]) {
         }
         else if (std::strcmp(argv[i], "--ignore-length") == 0) {
             ignoreLength = true;
-        }
-        else if (std::strcmp(argv[i], "--upgrade-status") == 0) {
-            upgradeStatus = true;
         }
         else if (std::strcmp(argv[i], "--price-per-sqft") == 0 && i + 1 < argc) {
             pricePerSqFt = std::stod(argv[++i]);
@@ -169,14 +166,18 @@ int main(int argc, char *argv[]) {
         AssignmentEngine engine(std::move(members), std::move(slips));
         engine.setVerbose(verbose);
         engine.setIgnoreLength(ignoreLength);
-        engine.setUpgradeStatus(upgradeStatus);
         engine.setPricePerSqFt(pricePerSqFt);
         auto assignments = engine.assign();
         
         if (outputFile.empty()) {
-            std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START\n";
+            // Show markers only when NOT in verbose mode
+            if (!verbose) {
+                std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START\n";
+            }
             std::cout << assignments;
-            std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END\n";
+            if (!verbose) {
+                std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END\n";
+            }
         }
         else {
             std::ofstream outFile(outputFile);

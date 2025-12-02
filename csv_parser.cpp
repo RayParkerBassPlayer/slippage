@@ -22,11 +22,11 @@ std::vector<Member> CsvParser::parseMembers(const std::string &filename) {
             currentSlip = currentSlipStr;
         }
         
-        std::string isPermanentStr = row["is_permanent"].get<>();
-        bool isPermanent = (isPermanentStr == "1" || isPermanentStr == "true" || isPermanentStr == "TRUE");
+        std::string dockStatusStr = row["dock_status"].get<>();
+        Member::DockStatus dockStatus = Member::stringToDockStatus(dockStatusStr);
         
         members.emplace_back(memberId, boatFeetLength, boatInchesLength,
-                           boatFeetWidth, boatInchesWidth, currentSlip, isPermanent);
+                           boatFeetWidth, boatInchesWidth, currentSlip, dockStatus);
     }
     
     return members;
@@ -77,7 +77,7 @@ static std::string quoteCsvField(const std::string &field) {
 }
 
 void CsvParser::writeAssignments(const std::vector<Assignment> &assignments, std::ostream &out) {
-    out << "member_id,assigned_slip,status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,price,upgraded,comment\n";
+    out << "member_id,assigned_slip,status,dock_status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,price,upgraded,comment\n";
     
     for (const auto &assignment : assignments) {
         const auto &dims = assignment.boatDimensions();
@@ -90,6 +90,7 @@ void CsvParser::writeAssignments(const std::vector<Assignment> &assignments, std
         out << assignment.memberId() << ","
             << assignment.slipId() << ","
             << Assignment::statusToString(assignment.status()) << ","
+            << Member::dockStatusToString(assignment.dockStatus()) << ","
             << lengthFeet << ","
             << lengthInches << ","
             << widthFeet << ","
