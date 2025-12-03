@@ -36,11 +36,11 @@ Priority determines who gets preference when multiple members want the same slip
 
 Each assignment results in one of these statuses:
 
-|| Status | Meaning |
-||--------|---------|
-|| **PERMANENT** | Member has a permanent assignment (either original or auto-upgraded) |
-|| **NEW** | Member is assigned to a different slip than before |
-|| **UNASSIGNED** | Member did not receive a slip assignment |
+ Status | Meaning |
+--------|---------|
+ **PERMANENT** | Member has a permanent assignment (either original or auto-upgraded) |
+ **NEW** | Member is assigned to a different slip than before |
+ **UNASSIGNED** | Member did not receive a slip assignment |
 
 **Note:** Members who keep their current slip are automatically upgraded to PERMANENT status. The `upgraded` field indicates whether this auto-upgrade occurred.
 
