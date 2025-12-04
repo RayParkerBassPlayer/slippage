@@ -1,4 +1,4 @@
-#include "member.h"
+#include "member.hpp"
 #include <stdexcept>
 
 Member::Member(const std::string &memberId, int boatFeetLength, int boatInchesLength,

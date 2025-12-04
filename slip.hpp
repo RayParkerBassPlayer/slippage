@@ -1,7 +1,7 @@
 #ifndef SLIP_H
 #define SLIP_H
 
-#include "dimensions.h"
+#include "dimensions.hpp"
 #include <string>
 
 class Slip {

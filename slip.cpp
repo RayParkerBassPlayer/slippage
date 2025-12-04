@@ -1,4 +1,4 @@
-#include "slip.h"
+#include "slip.hpp"
 
 Slip::Slip(const std::string &slipId, int feetLength, int inchesLength, int feetWidth, int inchesWidth)
     : mId(slipId), mMaxDimensions(feetLength, inchesLength, feetWidth, inchesWidth){

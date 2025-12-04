@@ -1,9 +1,9 @@
 #ifndef CSV_PARSER_H
 #define CSV_PARSER_H
 
-#include "member.h"
-#include "slip.h"
-#include "assignment.h"
+#include "member.hpp"
+#include "slip.hpp"
+#include "assignment.hpp"
 #include <vector>
 #include <string>
 #include <ostream>

@@ -1,10 +1,10 @@
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 
-#include "../assignment_engine.h"
-#include "../member.h"
-#include "../slip.h"
-#include "../assignment.h"
+#include "../assignment_engine.hpp"
+#include "../member.hpp"
+#include "../slip.hpp"
+#include "../assignment.hpp"
 
 TEST_CASE("Basic slip assignment", "[assignment]") {
     std::vector<Slip> slips;

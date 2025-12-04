@@ -1,8 +1,8 @@
 #ifndef ASSIGNMENT_H
 #define ASSIGNMENT_H
 
-#include "dimensions.h"
-#include "member.h"
+#include "dimensions.hpp"
+#include "member.hpp"
 #include <string>
 
 class Assignment {

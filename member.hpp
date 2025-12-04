@@ -1,7 +1,7 @@
 #ifndef MEMBER_H
 #define MEMBER_H
 
-#include "dimensions.h"
+#include "dimensions.hpp"
 #include <string>
 #include <optional>
 

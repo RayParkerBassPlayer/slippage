@@ -1,9 +1,9 @@
 #ifndef ASSIGNMENT_ENGINE_H
 #define ASSIGNMENT_ENGINE_H
 
-#include "member.h"
-#include "slip.h"
-#include "assignment.h"
+#include "member.hpp"
+#include "slip.hpp"
+#include "assignment.hpp"
 #include <vector>
 #include <map>
 

@@ -1,4 +1,4 @@
-#include "dimensions.h"
+#include "dimensions.hpp"
 
 Dimensions::Dimensions(int feetLength, int inchesLength, int feetWidth, int inchesWidth)
     : mLengthInches(feetLength * 12 + inchesLength),
