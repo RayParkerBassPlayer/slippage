@@ -7,44 +7,44 @@ Member::Member(const std::string &memberId, int boatFeetLength, int boatInchesLe
     : mId(memberId),
       mBoatDimensions(boatFeetLength, boatInchesLength, boatFeetWidth, boatInchesWidth),
       mCurrentSlip(currentSlip),
-      mDockStatus(dockStatus) {
+      mDockStatus(dockStatus){
 }
 
-bool Member::operator<(const Member &other) const {
+bool Member::operator<(const Member &other) const{
     return mId < other.mId;
 }
 
-bool Member::operator>(const Member &other) const {
+bool Member::operator>(const Member &other) const{
     return mId > other.mId;
 }
 
-bool Member::operator==(const Member &other) const {
+bool Member::operator==(const Member &other) const{
     return mId == other.mId;
 }
 
-Member::DockStatus Member::stringToDockStatus(const std::string &str) {
-    if (str == "permanent") {
+Member::DockStatus Member::stringToDockStatus(const std::string &str){
+    if (str == "permanent"){
         return DockStatus::PERMANENT;
     }
-    else if (str == "year-off") {
+    else if (str == "year-off"){
         return DockStatus::YEAR_OFF;
     }
-    else if (str == "waiting-list") {
+    else if (str == "waiting-list"){
         return DockStatus::WAITING_LIST;
     }
-    else if (str == "temporary") {
+    else if (str == "temporary"){
         return DockStatus::TEMPORARY;
     }
-    else if (str == "unassigned") {
+    else if (str == "unassigned"){
         return DockStatus::UNASSIGNED;
     }
-    else {
+    else{
         throw std::invalid_argument("Invalid dock status: " + str);
     }
 }
 
-std::string Member::dockStatusToString(DockStatus status) {
-    switch (status) {
+std::string Member::dockStatusToString(DockStatus status){
+    switch (status){
         case DockStatus::PERMANENT:
             return "permanent";
         case DockStatus::YEAR_OFF:

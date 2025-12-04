@@ -6,13 +6,13 @@
 #include <string>
 #include <cstring>
 
-void printVersion() {
+void printVersion(){
     std::cout << "Slippage v" << SLIPPAGE_VERSION << "\n";
     std::cout << "Boat slip assignment system for marina clubs\n";
     std::cout << "\n";
 }
 
-void printHelp(const char *programName) {
+void printHelp(const char *programName){
     printVersion();
     std::cout << "USAGE:\n";
     std::cout << "  " << programName << " --slips <slips.csv> --members <members.csv> [OPTIONS]\n";
@@ -95,15 +95,15 @@ void printHelp(const char *programName) {
     std::cout << "\n";
 }
 
-void printUsage(const char *programName) {
+void printUsage(const char *programName){
     std::cerr << "Error: Missing required arguments\n\n";
     std::cerr << "Usage: " << programName << " --slips <slips.csv> --members <members.csv>\n";
     std::cerr << "Try '" << programName << " --help' for more information.\n";
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]){
     // Handle no arguments
-    if (argc == 1) {
+    if (argc == 1){
         printUsage(argv[0]);
         return 1;
     }
@@ -115,51 +115,51 @@ int main(int argc, char *argv[]) {
     bool ignoreLength = false;
     double pricePerSqFt = 0.0;
     
-    for (int i = 1; i < argc; ++i) {
-        if (std::strcmp(argv[i], "--slips") == 0 && i + 1 < argc) {
+    for (int i = 1; i < argc; ++i){
+        if (std::strcmp(argv[i], "--slips") == 0 && i + 1 < argc){
             slipsFile = argv[++i];
         }
-        else if (std::strcmp(argv[i], "--members") == 0 && i + 1 < argc) {
+        else if (std::strcmp(argv[i], "--members") == 0 && i + 1 < argc){
             membersFile = argv[++i];
         }
-        else if (std::strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
+        else if (std::strcmp(argv[i], "--output") == 0 && i + 1 < argc){
             outputFile = argv[++i];
         }
-        else if (std::strcmp(argv[i], "--verbose") == 0) {
+        else if (std::strcmp(argv[i], "--verbose") == 0){
             verbose = true;
         }
-        else if (std::strcmp(argv[i], "--ignore-length") == 0) {
+        else if (std::strcmp(argv[i], "--ignore-length") == 0){
             ignoreLength = true;
         }
-        else if (std::strcmp(argv[i], "--price-per-sqft") == 0 && i + 1 < argc) {
+        else if (std::strcmp(argv[i], "--price-per-sqft") == 0 && i + 1 < argc){
             pricePerSqFt = std::stod(argv[++i]);
         }
-        else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
+        else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0){
             printHelp(argv[0]);
             return 0;
         }
-        else if (std::strcmp(argv[i], "--version") == 0 || std::strcmp(argv[i], "-v") == 0) {
+        else if (std::strcmp(argv[i], "--version") == 0 || std::strcmp(argv[i], "-v") == 0){
             printVersion();
             return 0;
         }
-        else if (std::strcmp(argv[i], "--slips") == 0 || std::strcmp(argv[i], "--members") == 0 || std::strcmp(argv[i], "--output") == 0 || std::strcmp(argv[i], "--price-per-sqft") == 0) {
+        else if (std::strcmp(argv[i], "--slips") == 0 || std::strcmp(argv[i], "--members") == 0 || std::strcmp(argv[i], "--output") == 0 || std::strcmp(argv[i], "--price-per-sqft") == 0){
             std::cerr << "Error: " << argv[i] << " requires an argument\n\n";
             std::cerr << "Try '" << argv[0] << " --help' for more information.\n";
             return 1;
         }
-        else {
+        else{
             std::cerr << "Error: Unknown argument '" << argv[i] << "'\n\n";
             std::cerr << "Try '" << argv[0] << " --help' for more information.\n";
             return 1;
         }
     }
     
-    if (slipsFile.empty() || membersFile.empty()) {
+    if (slipsFile.empty() || membersFile.empty()){
         printUsage(argv[0]);
         return 1;
     }
     
-    try {
+    try{
         auto slips = CsvParser::parseSlips(slipsFile);
         auto members = CsvParser::parseMembers(membersFile);
         
@@ -169,20 +169,21 @@ int main(int argc, char *argv[]) {
         engine.setPricePerSqFt(pricePerSqFt);
         auto assignments = engine.assign();
         
-        if (outputFile.empty()) {
+        if (outputFile.empty()){
             // Show markers only when NOT in verbose mode
-            if (!verbose) {
+            if (!verbose){
                 std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS START\n";
             }
             std::cout << assignments;
-            if (!verbose) {
+            
+            if (!verbose){
                 std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>ASSIGNMENTS END\n";
             }
         }
-        else {
+        else{
             std::ofstream outFile(outputFile);
             
-            if (!outFile) {
+            if (!outFile){
                 std::cerr << "Error: Cannot open output file '" << outputFile << "'\n";
                 return 1;
             }
@@ -190,14 +191,14 @@ int main(int argc, char *argv[]) {
             outFile << assignments;
             outFile.close();
             
-            if (verbose) {
+            if (verbose){
                 std::cout << "\nAssignments written to: " << outputFile << "\n";
             }
         }
         
         return 0;
     }
-    catch (const std::exception &e) {
+    catch (const std::exception &e){
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }

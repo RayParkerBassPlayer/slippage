@@ -31,18 +31,18 @@ public:
                const Dimensions &slipDimensions, Member::DockStatus dockStatus,
                const std::string &comment = "", double pricePerSqFt = 0.0, bool upgraded = false);
     
-    const std::string& memberId() const { return mMemberId; }
-    const std::string& slipId() const { return mSlipId; }
+    const std::string &memberId() const { return mMemberId; }
+    const std::string &slipId() const { return mSlipId; }
     Status status() const { return mStatus; }
-    const Dimensions& boatDimensions() const { return mBoatDimensions; }
-    const Dimensions& slipDimensions() const { return mSlipDimensions; }
-    const std::string& comment() const { return mComment; }
+    const Dimensions &boatDimensions() const { return mBoatDimensions; }
+    const Dimensions &slipDimensions() const { return mSlipDimensions; }
+    const std::string &comment() const { return mComment; }
     double price() const { return mPrice; }
     bool upgraded() const { return mUpgraded; }
     Member::DockStatus dockStatus() const { return mDockStatus; }
     
-    void upgradeToPermament() {
-        if (mStatus != Status::PERMANENT) {
+    void upgradeToPermament(){
+        if (mStatus != Status::PERMANENT){
             mStatus = Status::PERMANENT;
             mUpgraded = true;
         }

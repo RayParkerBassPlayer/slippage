@@ -8,8 +8,8 @@ class Dimensions {
 public:
     Dimensions(int feetLength, int inchesLength, int feetWidth, int inchesWidth);
     
-    int lengthInches() const { return mLengthInches; }
-    int widthInches() const { return mWidthInches; }
+    int lengthInches() const{ return mLengthInches; }
+    int widthInches() const{ return mWidthInches; }
     
     bool fitsIn(const Dimensions &container) const;
     bool fitsInWidthOnly(const Dimensions &container) const;

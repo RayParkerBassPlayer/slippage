@@ -26,10 +26,10 @@ public:
            int boatFeetWidth, int boatInchesWidth, 
            const std::optional<std::string> &currentSlip, DockStatus dockStatus);
     
-    const std::string& id() const { return mId; }
-    const Dimensions& boatDimensions() const { return mBoatDimensions; }
-    const std::optional<std::string>& currentSlip() const { return mCurrentSlip; }
-    DockStatus dockStatus() const { return mDockStatus; }
+    const std::string &id() const{ return mId; }
+    const Dimensions &boatDimensions() const{ return mBoatDimensions; }
+    const std::optional<std::string> &currentSlip() const{ return mCurrentSlip; }
+    DockStatus dockStatus() const{ return mDockStatus; }
     
     static DockStatus stringToDockStatus(const std::string &str);
     static std::string dockStatusToString(DockStatus status);

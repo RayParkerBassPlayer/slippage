@@ -39,9 +39,9 @@ class AssignmentEngine {
 public:
     AssignmentEngine(std::vector<Member> members, std::vector<Slip> slips);
     
-    void setVerbose(bool verbose) { mVerbose = verbose; }
-    void setIgnoreLength(bool ignoreLength) { mIgnoreLength = ignoreLength; }
-    void setPricePerSqFt(double pricePerSqFt) { mPricePerSqFt = pricePerSqFt; }
+    void setVerbose(bool verbose){ mVerbose = verbose; }
+    void setIgnoreLength(bool ignoreLength){ mIgnoreLength = ignoreLength; }
+    void setPricePerSqFt(double pricePerSqFt){ mPricePerSqFt = pricePerSqFt; }
     std::vector<Assignment> assign();
 };
 

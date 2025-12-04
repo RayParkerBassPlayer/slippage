@@ -5,11 +5,11 @@
 #include <stdexcept>
 #include <sstream>
 
-std::vector<Member> CsvParser::parseMembers(const std::string &filename) {
+std::vector<Member> CsvParser::parseMembers(const std::string &filename){
     std::vector<Member> members;
     csv::CSVReader reader(filename);
     
-    for (csv::CSVRow &row : reader) {
+    for (csv::CSVRow &row : reader){
         std::string memberId = row["member_id"].get<>();
         int boatFeetLength = row["boat_length_ft"].get<int>();
         int boatInchesLength = row["boat_length_in"].get<int>();
@@ -18,7 +18,8 @@ std::vector<Member> CsvParser::parseMembers(const std::string &filename) {
         
         std::optional<std::string> currentSlip;
         std::string currentSlipStr = row["current_slip"].get<>();
-        if (!currentSlipStr.empty()) {
+        
+        if (!currentSlipStr.empty()){
             currentSlip = currentSlipStr;
         }
         
@@ -32,11 +33,11 @@ std::vector<Member> CsvParser::parseMembers(const std::string &filename) {
     return members;
 }
 
-std::vector<Slip> CsvParser::parseSlips(const std::string &filename) {
+std::vector<Slip> CsvParser::parseSlips(const std::string &filename){
     std::vector<Slip> slips;
     csv::CSVReader reader(filename);
     
-    for (csv::CSVRow &row : reader) {
+    for (csv::CSVRow &row : reader){
         std::string slipId = row["slip_id"].get<>();
         int feetLength = row["max_length_ft"].get<int>();
         int inchesLength = row["max_length_in"].get<int>();
@@ -50,8 +51,8 @@ std::vector<Slip> CsvParser::parseSlips(const std::string &filename) {
 }
 
 // Escape and quote a CSV field if it contains special characters
-static std::string quoteCsvField(const std::string &field) {
-    if (field.empty()) {
+static std::string quoteCsvField(const std::string &field){
+    if (field.empty()){
         return field;
     }
     
@@ -63,11 +64,11 @@ static std::string quoteCsvField(const std::string &field) {
     std::ostringstream result;
     result << '"';
     
-    for (char c : field) {
-        if (c == '"') {
+    for (char c : field){
+        if (c == '"'){
             result << "\"\"";
         }
-        else {
+        else{
             result << c;
         }
     }
@@ -76,10 +77,10 @@ static std::string quoteCsvField(const std::string &field) {
     return result.str();
 }
 
-void CsvParser::writeAssignments(const std::vector<Assignment> &assignments, std::ostream &out) {
+void CsvParser::writeAssignments(const std::vector<Assignment> &assignments, std::ostream &out){
     out << "member_id,assigned_slip,status,dock_status,boat_length_ft,boat_length_in,boat_width_ft,boat_width_in,price,upgraded,comment\n";
     
-    for (const auto &assignment : assignments) {
+    for (const auto &assignment : assignments){
         const auto &dims = assignment.boatDimensions();
         
         int lengthFeet = dims.lengthInches() / 12;
@@ -96,7 +97,7 @@ void CsvParser::writeAssignments(const std::vector<Assignment> &assignments, std
             << widthFeet << ","
             << widthInches << ",";
         
-        if (assignment.price() > 0.0) {
+        if (assignment.price() > 0.0){
             out << std::fixed << std::setprecision(2) << assignment.price();
         }
         
