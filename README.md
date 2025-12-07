@@ -56,6 +56,31 @@ cmake --build build -j4
 sudo cmake --install build
 ```
 
+### Option 3: Install as Library
+
+You can install Slippage as a static library to use in your own C++ projects:
+
+```bash
+# Build and install the library
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j4
+sudo cmake --install build
+
+# Or install to a custom prefix
+cmake --install build --prefix /usr/local
+```
+
+This installs:
+- Static library: `libslippage.a`
+- Headers: `assignment_engine.hpp`, `member.hpp`, `slip.hpp`, `dimensions.hpp`, etc.
+- CMake config files for easy integration with other CMake projects
+- CLI executable: `slippage`
+
+**Documentation:**
+- **[API.md](API.md)** - Complete C++ API reference with all classes, methods, and usage examples
+- **[examples/](examples/)** - Working code examples demonstrating library usage
+- **[examples/README.md](examples/README.md)** - Quick reference guide
+
 ### Running
 
 ```bash
@@ -249,6 +274,16 @@ M200,,UNASSIGNED,unassigned,35,0,14,0,0.00,false,"Boat too large for all availab
   ```
 
 **Note:** All members appear in the output. Members who don't receive an assignment have an empty `assigned_slip` field and status `UNASSIGNED`.
+
+## Documentation
+
+The project includes comprehensive documentation:
+
+- **[README.md](README.md)** (this file) - User guide, CLI usage, and file formats
+- **[API.md](API.md)** - Complete C++ API reference with detailed class documentation and usage examples
+- **[ASSIGNMENT_RULES.md](ASSIGNMENT_RULES.md)** - Detailed explanation of the assignment algorithm and rules
+- **[examples/README.md](examples/README.md)** - Quick start guide for using Slippage as a library
+- **[examples/example_usage.cpp](examples/example_usage.cpp)** - Working code demonstrating all library features
 
 ## Assignment Rules
 

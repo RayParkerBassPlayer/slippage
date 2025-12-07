@@ -1,0 +1,62 @@
+#ifndef SLIPPAGE_VERSION_HPP
+#define SLIPPAGE_VERSION_HPP
+
+#include <string>
+
+// Version macros for compile-time checks
+#define SLIPPAGE_VERSION_MAJOR @Slippage_VERSION_MAJOR@
+#define SLIPPAGE_VERSION_MINOR @Slippage_VERSION_MINOR@
+#define SLIPPAGE_VERSION_PATCH @Slippage_VERSION_PATCH@
+#define SLIPPAGE_VERSION_STRING "@Slippage_VERSION@"
+
+// Namespace for version API
+namespace slippage {
+namespace version {
+
+/**
+ * Returns the major version number.
+ * @return Major version (e.g., 1 for version 1.0.0)
+ */
+inline int major(){
+    return SLIPPAGE_VERSION_MAJOR;
+}
+
+/**
+ * Returns the minor version number.
+ * @return Minor version (e.g., 0 for version 1.0.0)
+ */
+inline int minor(){
+    return SLIPPAGE_VERSION_MINOR;
+}
+
+/**
+ * Returns the patch version number.
+ * @return Patch version (e.g., 0 for version 1.0.0)
+ */
+inline int patch(){
+    return SLIPPAGE_VERSION_PATCH;
+}
+
+/**
+ * Returns the full version string.
+ * @return Version string (e.g., "1.0.0")
+ */
+inline std::string string(){
+    return SLIPPAGE_VERSION_STRING;
+}
+
+/**
+ * Returns a formatted version string with program name.
+ * @return Formatted version (e.g., "Slippage v1.0.0")
+ */
+inline std::string full(){
+    return "Slippage v" + string();
+}
+
+}  // namespace version
+}  // namespace slippage
+
+// Maintain backward compatibility with old macros
+#define SLIPPAGE_VERSION SLIPPAGE_VERSION_STRING
+
+#endif  // SLIPPAGE_VERSION_HPP
