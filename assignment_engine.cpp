@@ -323,10 +323,12 @@ void AssignmentEngine::assignRemainingMembers(std::vector<Assignment> &assignmen
             continue;
         }
 
-        // Determine status: SAME if kept current slip, NEW otherwise
-        Assignment::Status status = Assignment::Status::NEW;
+        // Determine status: SAME if kept current slip, TEMPORARY otherwise
+        // Exception: UNASSIGNED members always get TEMPORARY status (even if they kept their slip)
+        Assignment::Status status = Assignment::Status::TEMPORARY;
         
-        if (member->currentSlip().has_value() && member->currentSlip().value() == slipId){
+        if (member->dockStatus() != Member::DockStatus::UNASSIGNED &&
+            member->currentSlip().has_value() && member->currentSlip().value() == slipId){
             status = Assignment::Status::SAME;
         }
         
@@ -694,7 +696,7 @@ void AssignmentEngine::printStatistics(const std::vector<Assignment> &assignment
             case Assignment::Status::SAME:
                 sameCount++;
                 break;
-            case Assignment::Status::NEW:
+            case Assignment::Status::TEMPORARY:
                 newCount++;
                 break;
             case Assignment::Status::UNASSIGNED:

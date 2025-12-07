@@ -10,7 +10,7 @@ public:
     enum class Status {
         PERMANENT,
         SAME,
-        NEW,
+        TEMPORARY,
         UNASSIGNED
     };
 

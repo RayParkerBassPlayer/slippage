@@ -122,7 +122,7 @@ The engine maintains two critical maps:
 - `Dimensions`: Stores boat/slip dimensions in total inches for precise comparison; provides `fitsInWidthOnly()` for width-only checks
 - `Slip`: Slip ID and maximum dimensions; provides `fits()` method and `fitsWidthOnly()` for --ignore-length mode
 - `Member`: Member ID, boat dimensions, current slip, dock status (enum: PERMANENT, YEAR_OFF, WAITING_LIST, TEMPORARY, UNASSIGNED); implements comparison operators for priority
-- `Assignment`: Result structure with status (PERMANENT, NEW, UNASSIGNED), dock status, boat and slip dimensions, price, upgraded flag, and comment
+- `Assignment`: Result structure with status (PERMANENT, TEMPORARY, UNASSIGNED), dock status, boat and slip dimensions, price, upgraded flag, and comment
 
 **CsvParser** (`csv_parser.h/cpp`): Handles CSV I/O using csv-parser library
 - `parseMembers()`: Reads members.csv
@@ -232,7 +232,7 @@ Follow these C++ coding standards (enforced by user rules):
   // With public enum needed by private member
   class Assignment {
   public:
-      enum class Status { PERMANENT, NEW, UNASSIGNED };
+      enum class Status { PERMANENT, TEMPORARY, UNASSIGNED };
   
   private:
       Status mStatus;  // uses public enum
@@ -274,7 +274,7 @@ TEST_CASE("Description of what you're testing", "[category]") {
     
     REQUIRE(assignments.size() == 1);
     REQUIRE(assignments[0].slipId() == "S1");
-    REQUIRE(assignments[0].status() == Assignment::Status::NEW);
+    REQUIRE(assignments[0].status() == Assignment::Status::TEMPORARY);
 }
 ```
 

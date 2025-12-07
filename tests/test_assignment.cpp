@@ -20,7 +20,7 @@ TEST_CASE("Basic slip assignment", "[assignment]") {
     REQUIRE(assignments.size() == 1);
     REQUIRE(assignments[0].memberId() == "M1");
     REQUIRE(assignments[0].slipId() == "S1");
-    REQUIRE(assignments[0].status() == Assignment::Status::NEW);
+    REQUIRE(assignments[0].status() == Assignment::Status::TEMPORARY);
 }
 
 TEST_CASE("Member keeps current slip (auto-upgraded)", "[assignment]") {
@@ -229,7 +229,7 @@ TEST_CASE("Complex scenario with permanent, eviction, and new assignments", "[as
         }
         else if (assignment.memberId() == "M1") {
             REQUIRE(assignment.slipId() == "S1");
-            REQUIRE(assignment.status() == Assignment::Status::NEW);
+            REQUIRE(assignment.status() == Assignment::Status::TEMPORARY);
             m1Found = true;
         }
         else if (assignment.memberId() == "M2") {
@@ -362,7 +362,7 @@ TEST_CASE("Ignore length: boat too long but fits width-wise", "[assignment][igno
     REQUIRE(assignments.size() == 1);
     REQUIRE(assignments[0].memberId() == "M1");
     REQUIRE(assignments[0].slipId() == "S1");
-    REQUIRE(assignments[0].status() == Assignment::Status::NEW);
+    REQUIRE(assignments[0].status() == Assignment::Status::TEMPORARY);
     REQUIRE(assignments[0].comment() == "NOTE: boat is 5' longer than slip");
 }
 
@@ -380,7 +380,7 @@ TEST_CASE("Ignore length: boat shorter than slip", "[assignment][ignore_length]"
     REQUIRE(assignments.size() == 1);
     REQUIRE(assignments[0].memberId() == "M1");
     REQUIRE(assignments[0].slipId() == "S1");
-    REQUIRE(assignments[0].status() == Assignment::Status::NEW);
+    REQUIRE(assignments[0].status() == Assignment::Status::TEMPORARY);
     REQUIRE(assignments[0].comment() == "NOTE: boat is 4' 6\" shorter than slip");
 }
 
@@ -726,7 +726,7 @@ TEST_CASE("Upgrade status: NEW assignments not upgraded", "[assignment][upgrade]
     auto assignments = engine.assign();
     
     REQUIRE(assignments.size() == 1);
-    REQUIRE(assignments[0].status() == Assignment::Status::NEW);
+    REQUIRE(assignments[0].status() == Assignment::Status::TEMPORARY);
     REQUIRE(assignments[0].upgraded() == false);
 }
 

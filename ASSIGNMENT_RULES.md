@@ -39,7 +39,7 @@ Each assignment results in one of these statuses:
  Status | Meaning |
 --------|---------|
  **PERMANENT** | Member has a permanent assignment (either original or auto-upgraded) |
- **NEW** | Member is assigned to a different slip than before |
+ **TEMPORARY** | Member is assigned to a different slip than before |
  **UNASSIGNED** | Member did not receive a slip assignment |
 
 **Note:** Members who keep their current slip are automatically upgraded to PERMANENT status. The `upgraded` field indicates whether this auto-upgrade occurred.
@@ -331,7 +331,7 @@ Members:
 **Output:**
 ```
 M1, S1, SAME
-M2, S2, NEW
+M2, S2, TEMPORARY
 ```
 
 ### Example 3: Permanent Member Protection
@@ -355,7 +355,7 @@ Members:
 **Output:**
 ```
 M5, S1, PERMANENT
-M1, S2, NEW
+M1, S2, TEMPORARY
 ```
 
 ### Example 4: Size-Based Protection
@@ -378,7 +378,7 @@ Members:
 
 **Output:**
 ```
-M1, S2, NEW
+M1, S2, TEMPORARY
 M2, S1, SAME
 ```
 

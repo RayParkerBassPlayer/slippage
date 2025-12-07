@@ -33,8 +33,8 @@ std::string Assignment::statusToString(Status status){
             return "PERMANENT";
         case Status::SAME:
             return "SAME";
-        case Status::NEW:
-            return "NEW";
+        case Status::TEMPORARY:
+            return "TEMPORARY";
         case Status::UNASSIGNED:
             return "UNASSIGNED";
     }
