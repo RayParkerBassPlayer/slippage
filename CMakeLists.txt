@@ -7,12 +7,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Configure version header
 configure_file(
-    ${CMAKE_SOURCE_DIR}/version.hpp.in
-    ${CMAKE_BINARY_DIR}/version.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.hpp
 )
 
-include_directories(${CMAKE_SOURCE_DIR}/external/csv-parser/single_include)
-include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/csv-parser/single_include)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Library target
 add_library(slippage_lib STATIC
@@ -25,9 +25,9 @@ add_library(slippage_lib STATIC
 )
 
 target_include_directories(slippage_lib PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/csv-parser/single_include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external/csv-parser/single_include>
     $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/slippage/external>
 )
@@ -49,7 +49,7 @@ target_link_libraries(slippage PRIVATE slippage_lib)
 # Test executable
 enable_testing()
 
-include_directories(${CMAKE_SOURCE_DIR}/external/catch2)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/catch2)
 
 add_executable(slippage_tests
     tests/test_assignment.cpp
@@ -72,19 +72,19 @@ install(TARGETS slippage slippage_lib
 
 # Install generated version header
 install(FILES
-    ${CMAKE_BINARY_DIR}/version.hpp
+    ${CMAKE_CURRENT_BINARY_DIR}/version.hpp
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/slippage
 )
 
 # Install csv-parser header for library users
 install(FILES
-    ${CMAKE_SOURCE_DIR}/external/csv-parser/single_include/csv.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/csv-parser/single_include/csv.hpp
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/slippage/external
 )
 
 install(FILES
-    ${CMAKE_SOURCE_DIR}/ASSIGNMENT_RULES.md
-    ${CMAKE_SOURCE_DIR}/README.md
+    ${CMAKE_CURRENT_SOURCE_DIR}/ASSIGNMENT_RULES.md
+    ${CMAKE_CURRENT_SOURCE_DIR}/README.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
 
@@ -99,19 +99,19 @@ install(EXPORT SlippageTargets
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
-    ${CMAKE_SOURCE_DIR}/cmake/SlippageConfig.cmake.in
-    ${CMAKE_BINARY_DIR}/SlippageConfig.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/SlippageConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/SlippageConfig.cmake
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Slippage
 )
 
 write_basic_package_version_file(
-    ${CMAKE_BINARY_DIR}/SlippageConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/SlippageConfigVersion.cmake
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 
 install(FILES
-    ${CMAKE_BINARY_DIR}/SlippageConfig.cmake
-    ${CMAKE_BINARY_DIR}/SlippageConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/SlippageConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/SlippageConfigVersion.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Slippage
 )
